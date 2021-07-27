@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"plugin"
 
-	"github.com/childe/gohangout/topology"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/topology"
 )
 
 type BuildInputFunc func(map[interface{}]interface{}) topology.Input
 
-var registeredInput map[string]BuildInputFunc = make(map[string]BuildInputFunc)
+var registeredInput = make(map[string]BuildInputFunc)
 
 // Register is used by input plugins to register themselves
 func Register(inputType string, bf BuildInputFunc) {
@@ -21,7 +21,7 @@ func Register(inputType string, bf BuildInputFunc) {
 	registeredInput[inputType] = bf
 }
 
-// GetInput return topoloty.Input from builtin plugins or from a 3rd party plugin
+// GetInput return topology.Input from builtin plugins or from a 3rd party plugin
 func GetInput(inputType string, config map[interface{}]interface{}) topology.Input {
 	if v, ok := registeredInput[inputType]; ok {
 		return v(config)

@@ -14,16 +14,16 @@ import (
 )
 
 const (
-	DEFAULT_BULK_SIZE      = 15 * 1024 * 1024
-	DEFAULT_BULK_ACTIONS   = 5000
-	DEFAULT_FLUSH_INTERVAL = 30
-	DEFAULT_CONCURRENT     = 1
+	DefaultBulkSize      = 15 * 1024 * 1024
+	DefaultBulkActions   = 5000
+	DefaultFlushInterval = 30
+	DefaultConcurrent    = 1
 
-	MAX_BYTE_SIZE_APPLIED_IN_ADVANCE = 1024 * 1024 * 50
+	MaxByteSizeAppliedInAdvance = 1024 * 1024 * 50
 )
 
 var (
-	REMOVE_HTTP_AUTH_REGEXP = regexp.MustCompile(`^(?i)(http(s?)://)[^:]+:[^@]+@`)
+	RemoveHttpAuthRegexp = regexp.MustCompile(`^(?i)(http(s?)://)[^:]+:[^@]+@`)
 )
 
 type Event interface {
@@ -51,15 +51,15 @@ type HTTPBulkProcessor struct {
 	headers           map[string]string
 	requestMethod     string
 	retryResponseCode map[int]bool
-	bulk_size         int
-	bulk_actions      int
-	flush_interval    int
+	bulkSize          int
+	bulkActions       int
+	flushInterval     int
 	concurrent        int
 	compress          bool
-	execution_id      int
+	executionId       int
 	client            *http.Client
 	mux               sync.Mutex
-	executionIDmux    sync.Mutex
+	executionIdMux    sync.Mutex
 	wg                sync.WaitGroup
 
 	bulkChan chan *BulkRequest
@@ -70,7 +70,7 @@ type HTTPBulkProcessor struct {
 	getRetryEventsFunc GetRetryEventsFunc
 }
 
-func NewHTTPBulkProcessor(headers map[string]string, hosts []string, requestMethod string, retryResponseCode map[int]bool, bulk_size, bulk_actions, flush_interval, concurrent int, compress bool, newBulkRequestFunc NewBulkRequestFunc, getRetryEventsFunc GetRetryEventsFunc) *HTTPBulkProcessor {
+func NewHTTPBulkProcessor(headers map[string]string, hosts []string, requestMethod string, retryResponseCode map[int]bool, bulkSize, bulkActions, flushInterval, concurrent int, compress bool, newBulkRequestFunc NewBulkRequestFunc, getRetryEventsFunc GetRetryEventsFunc) *HTTPBulkProcessor {
 	hostsI := make([]interface{}, len(hosts))
 	for i, h := range hosts {
 		hostsI[i] = h
@@ -79,9 +79,9 @@ func NewHTTPBulkProcessor(headers map[string]string, hosts []string, requestMeth
 		headers:            headers,
 		requestMethod:      requestMethod,
 		retryResponseCode:  retryResponseCode,
-		bulk_size:          bulk_size,
-		bulk_actions:       bulk_actions,
-		flush_interval:     flush_interval,
+		bulkSize:           bulkSize,
+		bulkActions:        bulkActions,
+		flushInterval:      flushInterval,
 		client:             &http.Client{},
 		hostSelector:       NewRRHostSelector(hostsI, 3),
 		concurrent:         concurrent,
@@ -105,7 +105,7 @@ func NewHTTPBulkProcessor(headers map[string]string, hosts []string, requestMeth
 		}()
 	}
 
-	ticker := time.NewTicker(time.Second * time.Duration(flush_interval))
+	ticker := time.NewTicker(time.Second * time.Duration(flushInterval))
 	go func() {
 		for range ticker.C {
 			bulkProcessor.bulk()
@@ -128,7 +128,7 @@ func (p *HTTPBulkProcessor) add(event Event) {
 	p.bulkRequest.add(event)
 	p.mux.Unlock()
 
-	if p.bulkRequest.bufSizeByte() >= p.bulk_size || p.bulkRequest.eventCount() >= p.bulk_actions {
+	if p.bulkRequest.bufSizeByte() >= p.bulkSize || p.bulkRequest.eventCount() >= p.bulkActions {
 		p.bulk()
 	}
 }
@@ -143,31 +143,31 @@ func (p *HTTPBulkProcessor) bulk() {
 }
 
 func (p *HTTPBulkProcessor) innerBulk(bulkRequest *BulkRequest) {
-	p.executionIDmux.Lock()
-	p.execution_id++
-	execution_id := p.execution_id
-	p.executionIDmux.Unlock()
+	p.executionIdMux.Lock()
+	p.executionId++
+	executionId := p.executionId
+	p.executionIdMux.Unlock()
 
 	_startTime := float64(time.Now().UnixNano()/1000000) / 1000
 	eventCount := (*bulkRequest).eventCount()
-	glog.Infof("bulk %d docs with execution_id %d", eventCount, p.execution_id)
+	glog.Infof("bulk %d docs with execution_id %d", eventCount, p.executionId)
 	for {
-		nexthost := p.hostSelector.Next()
-		if nexthost == nil {
+		nextHost := p.hostSelector.Next()
+		if nextHost == nil {
 			glog.Info("no available host, wait for 30s")
 			time.Sleep(30 * time.Second)
 			continue
 		}
-		host := nexthost.(string)
+		host := nextHost.(string)
 
-		glog.Infof("try to bulk with host (%s)", REMOVE_HTTP_AUTH_REGEXP.ReplaceAllString(host, "${1}"))
+		glog.Infof("try to bulk with host (%s)", RemoveHttpAuthRegexp.ReplaceAllString(host, "${1}"))
 
 		url := strings.TrimRight(host, "/") + "/_bulk"
 		success, shouldRetry, noRetry, newBulkRequest := p.tryOneBulk(url, bulkRequest)
 		if success {
 			_finishTime := float64(time.Now().UnixNano()/1000000) / 1000
 			timeTaken := _finishTime - _startTime
-			glog.Infof("bulk done with execution_id %d %.3f %d %.3f", execution_id, timeTaken, eventCount, float64(eventCount)/timeTaken)
+			glog.Infof("bulk done with execution_id %d %.3f %d %.3f", executionId, timeTaken, eventCount, float64(eventCount)/timeTaken)
 			p.hostSelector.AddWeight()
 		} else {
 			glog.Errorf("bulk failed with %s", url)
@@ -286,7 +286,7 @@ AllBulkReqInChan:
 			}
 			p.wg.Add(1)
 			go func() {
-				glog.Infof("bulk %d docs from bulkChan in awaitclose", (*bulkRequest).eventCount())
+				glog.Infof("bulk %d docs from bulkChan in awaitClose", (*bulkRequest).eventCount())
 				p.innerBulk(bulkRequest)
 				p.wg.Done()
 			}()
@@ -305,7 +305,7 @@ AllBulkReqInChan:
 
 	p.wg.Add(1)
 	go func() {
-		glog.Infof("bulk last %d docs in awaitclose", bulkRequest.eventCount())
+		glog.Infof("bulk last %d docs in awaitClose", bulkRequest.eventCount())
 		p.innerBulk(&bulkRequest)
 		p.wg.Done()
 	}()

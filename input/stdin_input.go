@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/childe/gohangout/codec"
-	"github.com/childe/gohangout/topology"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/codec"
+	"github.com/kevinu2/gohangout/topology"
 )
 
 type StdinInput struct {
@@ -25,14 +25,14 @@ func init() {
 }
 
 func newStdinInput(config map[interface{}]interface{}) topology.Input {
-	var codertype string = "plain"
+	var coderType = "plain"
 	if v, ok := config["codec"]; ok {
-		codertype = v.(string)
+		coderType = v.(string)
 	}
 	p := &StdinInput{
 
 		config:   config,
-		decoder:  codec.NewDecoder(codertype),
+		decoder:  codec.NewDecoder(coderType),
 		scanner:  bufio.NewScanner(os.Stdin),
 		messages: make(chan []byte, 10),
 	}

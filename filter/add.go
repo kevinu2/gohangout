@@ -1,10 +1,10 @@
 package filter
 
 import (
-	"github.com/childe/gohangout/field_setter"
-	"github.com/childe/gohangout/topology"
-	"github.com/childe/gohangout/value_render"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/field_setter"
+	"github.com/kevinu2/gohangout/topology"
+	"github.com/kevinu2/gohangout/value_render"
 )
 
 type AddFilter struct {

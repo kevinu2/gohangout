@@ -10,9 +10,9 @@ import (
 	"runtime/pprof"
 	"sync"
 
-	"github.com/childe/gohangout/input"
-	"github.com/childe/gohangout/topology"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/input"
+	"github.com/kevinu2/gohangout/topology"
 )
 
 var options = &struct {
@@ -20,8 +20,8 @@ var options = &struct {
 	autoReload bool // 配置文件更新自动重启
 	pprof      bool
 	pprofAddr  string
-	cpuprofile string
-	memprofile string
+	cpuProfile string
+	memProfile string
 
 	exitWhenNil bool
 }{}
@@ -30,14 +30,14 @@ var (
 	worker = flag.Int("worker", 1, "worker thread count")
 )
 
-type gohangoutInputs []*input.InputBox
+type gohangoutInputs []*input.Box
 
 var inputs gohangoutInputs
 
-var mainThreadExitChan chan struct{} = make(chan struct{}, 0)
+var mainThreadExitChan = make(chan struct{}, 0)
 
 func (inputs gohangoutInputs) start() {
-	boxes := ([]*input.InputBox)(inputs)
+	boxes := ([]*input.Box)(inputs)
 	var wg sync.WaitGroup
 	wg.Add(len(boxes))
 
@@ -52,7 +52,7 @@ func (inputs gohangoutInputs) start() {
 }
 
 func (inputs gohangoutInputs) stop() {
-	boxes := ([]*input.InputBox)(inputs)
+	boxes := ([]*input.Box)(inputs)
 	for _, box := range boxes {
 		box.Shutdown()
 	}
@@ -64,16 +64,16 @@ func init() {
 
 	flag.BoolVar(&options.pprof, "pprof", false, "pprof or not")
 	flag.StringVar(&options.pprofAddr, "pprof-address", "127.0.0.1:8899", "default: 127.0.0.1:8899")
-	flag.StringVar(&options.cpuprofile, "cpuprofile", "", "write cpu profile to `file`")
-	flag.StringVar(&options.memprofile, "memprofile", "", "write mem profile to `file`")
+	flag.StringVar(&options.cpuProfile, "cpu-profile", "", "write cpu profile to `file`")
+	flag.StringVar(&options.memProfile, "mem-profile", "", "write mem profile to `file`")
 
 	flag.BoolVar(&options.exitWhenNil, "exit-when-nil", false, "triger gohangout to exit when receive a nil event")
 
 	flag.Parse()
 }
 
-func buildPluginLink(config map[string]interface{}) (boxes []*input.InputBox, err error) {
-	boxes = make([]*input.InputBox, 0)
+func buildPluginLink(config map[string]interface{}) (boxes []*input.Box, err error) {
+	boxes = make([]*input.Box, 0)
 
 	for inputIdx, inputI := range config["inputs"].([]interface{}) {
 		var inputPlugin topology.Input
@@ -114,8 +114,8 @@ func main() {
 			http.ListenAndServe(options.pprofAddr, nil)
 		}()
 	}
-	if options.cpuprofile != "" {
-		f, err := os.Create(options.cpuprofile)
+	if options.cpuProfile != "" {
+		f, err := os.Create(options.cpuProfile)
 		if err != nil {
 			glog.Fatalf("could not create CPU profile: %s", err)
 		}
@@ -125,9 +125,9 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	if options.memprofile != "" {
+	if options.memProfile != "" {
 		defer func() {
-			f, err := os.Create(options.memprofile)
+			f, err := os.Create(options.memProfile)
 			if err != nil {
 				glog.Fatalf("could not create memory profile: %s", err)
 			}
@@ -147,7 +147,7 @@ func main() {
 	if err != nil {
 		glog.Fatalf("build plugin link error: %v", err)
 	}
-	inputs = gohangoutInputs(boxes)
+	inputs = boxes
 	go inputs.start()
 
 	go func() {
@@ -155,7 +155,7 @@ func main() {
 			inputs.stop()
 			boxes, err := buildPluginLink(cfg)
 			if err == nil {
-				inputs = gohangoutInputs(boxes)
+				inputs = boxes
 				go inputs.start()
 			} else {
 				glog.Errorf("build plugin link error: %v", err)

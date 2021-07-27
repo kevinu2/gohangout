@@ -1,51 +1,51 @@
 inputs:
-    - Stdin:
-        codec: json
-    - Kafka:
-        topic:
-            test: 1
+  - Stdin:
+      codec: json
+  - Kafka:
+      topic:
+        test: 1
         #assign:
-            #test: [0, 9]
-        codec: json
-        consumer_settings:
-            bootstrap.servers: "10.0.0.100:9092"
-            group.id: hangout.test
-            from.beginning: 'true'
+        #test: [0, 9]
+      codec: json
+      consumer_settings:
+        bootstrap.servers: "10.0.0.100:9092"
+        group.id: hangout.test
+        from.beginning: 'true'
 
 filters:
-    - Add:
-        fields:
-            xxx: xxx
-            yyy: '[client]'
-            zzz: '[stored][message]'
-            '[a][b]': '[stored][message]'
-    - Grok:
-        src: message
-        pattern_paths:
-            - '/opt/gohangout/patterns'
-        match:
-            - '^(?P<logtime>\S+) (?P<name>\w+) (?P<status>\d+)$'
-            - '^%{USER:user} %{INT:status} %{INT:request_time}$'
-        remove_fields: ['message']
-    - Date:
-        location: 'Asia/Shanghai'
-        src: logtime
-        formats:
-            - 'RFC3339'
-            - '2006-01-02T15:04:05'
-            - '2006-01-02T15:04:05Z07:00'
-            - '2006-01-02T15:04:05Z0700'
-            - '2006-01-02'
-            - 'UNIX'
-            - 'UNIX_MS'
-        remove_fields: ["logtime"]
-    - Translate:
-        source: user
-        target: nick
-        refresh_interval: 3600
-        dictionary_path: http://corp.com/dict/user.yml
-    - Drop:
-        if:
+  - Add:
+      fields:
+        xxx: xxx
+        yyy: '[client]'
+        zzz: '[stored][message]'
+        '[a][b]': '[stored][message]'
+  - Grok:
+      src: message
+      pattern_paths:
+        - '/opt/gohangout/patterns'
+      match:
+        - '^(?P<logtime>\S+) (?P<name>\w+) (?P<status>\d+)$'
+        - '^%{USER:user} %{INT:status} %{INT:request_time}$'
+      remove_fields: [ 'message' ]
+  - Date:
+      location: 'Asia/Shanghai'
+      src: logtime
+      formats:
+        - 'RFC3339'
+        - '2006-01-02T15:04:05'
+        - '2006-01-02T15:04:05Z07:00'
+        - '2006-01-02T15:04:05Z0700'
+        - '2006-01-02'
+        - 'UNIX'
+        - 'UNIX_MS'
+      remove_fields: [ "logtime" ]
+  - Translate:
+      source: user
+      target: nick
+      refresh_interval: 3600
+      dictionary_path: http://corp.com/dict/user.yml
+  - Drop:
+      if:
         #- '{{if .name}}y{{end}}'
         #- '{{if eq .name "childe"}}y{{end}}'
         #- '{{if or (before . "-24h") (after . "24h")}}y{{end}}'
@@ -53,14 +53,14 @@ filters:
         - 'Before(-24h) || After(24h)'
 
 outputs:
-    - Stdout:
-        if:
-            - '{{if .error}}y{{end}}'
-    - Elasticsearch:
-        hosts:
-            - http://127.0.0.1:9200
-        index: 'web-%{+2006-01-02}' #golang里面的渲染方式就是用数字, 而不是用YYMM.
-        index_type: "logs"
-        bulk_actions: 5000
-        bulk_size: 20
-        flush_interval: 60
+  - Stdout:
+      if:
+        - '{{if .error}}y{{end}}'
+  - Elasticsearch:
+      hosts:
+        - http://127.0.0.1:9200
+      index: 'web-%{+2006-01-02}' #golang里面的渲染方式就是用数字, 而不是用YYMM.
+      index_type: "logs"
+      bulk_actions: 5000
+      bulk_size: 20
+      flush_interval: 60

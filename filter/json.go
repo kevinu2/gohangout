@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/childe/gohangout/topology"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/topology"
 )
 
 type JsonFilter struct {

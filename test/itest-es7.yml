@@ -5,7 +5,7 @@ inputs:
       max_messages: 1000
 outputs:
   #    - Stdout: {}
-  - Stdout: {}
+  - Stdout: { }
   - Elasticsearch:
       hosts:
         - 'http://username:password@10.0.0.2:9200'
@@ -18,5 +18,5 @@ outputs:
       concurrent: 1
       compress: false
       es_version: 7
-#      es_version: 6
-      retry_response_code: [401, 502]
+      #      es_version: 6
+      retry_response_code: [ 401, 502 ]

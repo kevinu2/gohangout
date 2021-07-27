@@ -7,10 +7,10 @@ import (
 	"github.com/oliveagle/jsonpath"
 )
 
-var matchp, matchGoTemp, matchESIndex, jsonPath *regexp.Regexp
+var matches, matchGoTemp, matchESIndex, jsonPath *regexp.Regexp
 
 func init() {
-	matchp, _ = regexp.Compile(`^(\[.*?\])+$`)
+	matches, _ = regexp.Compile(`^(\[.*?\])+$`)
 	matchGoTemp, _ = regexp.Compile(`{{.*}}`)
 	matchESIndex, _ = regexp.Compile(`%{.*?}`) //%{+YYYY.MM.dd}
 	jsonPath, _ = regexp.Compile(`^\$\.`)
@@ -23,10 +23,10 @@ type ValueRender interface {
 // getValueRender matches all regexp pattern and return a ValueRender
 // return nil if no pattern matched
 func getValueRender(template string) ValueRender {
-	if matchp.Match([]byte(template)) {
-		findp, _ := regexp.Compile(`(\[(.*?)\])`)
+	if matches.Match([]byte(template)) {
+		finds, _ := regexp.Compile(`(\[(.*?)\])`)
 		fields := make([]string, 0)
-		for _, v := range findp.FindAllStringSubmatch(template, -1) {
+		for _, v := range finds.FindAllStringSubmatch(template, -1) {
 			fields = append(fields, v[2])
 		}
 

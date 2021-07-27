@@ -3,7 +3,7 @@ package output
 import (
 	"fmt"
 
-	"github.com/childe/gohangout/topology"
+	"github.com/kevinu2/gohangout/topology"
 )
 
 type DotOutput struct {

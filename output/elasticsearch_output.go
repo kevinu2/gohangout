@@ -12,11 +12,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/childe/gohangout/codec"
-	"github.com/childe/gohangout/condition_filter"
-	"github.com/childe/gohangout/topology"
-	"github.com/childe/gohangout/value_render"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/codec"
+	"github.com/kevinu2/gohangout/condition_filter"
+	"github.com/kevinu2/gohangout/topology"
+	"github.com/kevinu2/gohangout/value_render"
 )
 
 const (
@@ -31,19 +31,19 @@ var (
 )
 
 type Action struct {
-	op         string
-	index      string
-	index_type string
-	id         string
-	routing    string
-	event      map[string]interface{}
-	rawSource  []byte
-	es_version int
+	op        string
+	index     string
+	indexType string
+	id        string
+	routing   string
+	event     map[string]interface{}
+	rawSource []byte
+	esVersion int
 }
 
 func (action *Action) Encode() []byte {
 	var (
-		meta []byte = make([]byte, 0, 1000)
+		meta = make([]byte, 0, 1000)
 		buf  []byte
 		err  error
 	)
@@ -51,16 +51,16 @@ func (action *Action) Encode() []byte {
 	index, _ := f().Encode(action.index)
 	meta = append(meta, index...)
 
-	if action.es_version <= defaultEsVersion {
+	if action.esVersion <= defaultEsVersion {
 		meta = append(meta, `,"_type":`...)
-		index_type, _ := f().Encode(action.index_type)
-		meta = append(meta, index_type...)
+		indexType, _ := f().Encode(action.indexType)
+		meta = append(meta, indexType...)
 	}
 
 	if action.id != "" {
 		meta = append(meta, `,"_id":`...)
-		doc_id, _ := f().Encode(action.id)
-		meta = append(meta, doc_id...)
+		docId, _ := f().Encode(action.id)
+		meta = append(meta, docId...)
 	}
 
 	meta = append(meta, `,"routing":`...)
@@ -79,45 +79,45 @@ func (action *Action) Encode() []byte {
 		buf = action.rawSource
 	}
 
-	bulk_buf := make([]byte, 0, len(meta)+len(buf)+1)
-	bulk_buf = append(bulk_buf, meta...)
-	bulk_buf = append(bulk_buf, buf[:len(buf)]...)
-	bulk_buf = append(bulk_buf, '\n')
-	return bulk_buf
+	bulkBuf := make([]byte, 0, len(meta)+len(buf)+1)
+	bulkBuf = append(bulkBuf, meta...)
+	bulkBuf = append(bulkBuf, buf[:]...)
+	bulkBuf = append(bulkBuf, '\n')
+	return bulkBuf
 }
 
 type ESBulkRequest struct {
-	events   []Event
-	bulk_buf []byte
+	events  []Event
+	bulkBuf []byte
 }
 
 func (br *ESBulkRequest) add(event Event) {
-	br.bulk_buf = append(br.bulk_buf, event.Encode()...)
+	br.bulkBuf = append(br.bulkBuf, event.Encode()...)
 	br.events = append(br.events, event)
 }
 
 func (br *ESBulkRequest) bufSizeByte() int {
-	return len(br.bulk_buf)
+	return len(br.bulkBuf)
 }
 func (br *ESBulkRequest) eventCount() int {
 	return len(br.events)
 }
 func (br *ESBulkRequest) readBuf() []byte {
-	return br.bulk_buf
+	return br.bulkBuf
 }
 
 type ElasticsearchOutput struct {
 	config map[interface{}]interface{}
 
-	action             string
-	index              value_render.ValueRender
-	index_type         value_render.ValueRender
-	id                 value_render.ValueRender
-	routing            value_render.ValueRender
-	source_field       value_render.ValueRender
-	bytes_source_field value_render.ValueRender
-	es_version         int
-	bulkProcessor      BulkProcessor
+	action           string
+	index            value_render.ValueRender
+	indexType        value_render.ValueRender
+	id               value_render.ValueRender
+	routing          value_render.ValueRender
+	sourceField      value_render.ValueRender
+	bytesSourceField value_render.ValueRender
+	esVersion        int
+	bulkProcessor    BulkProcessor
 
 	hosts    []string
 	user     string
@@ -127,7 +127,7 @@ type ElasticsearchOutput struct {
 func esGetRetryEvents(resp *http.Response, respBody []byte, bulkRequest *BulkRequest) ([]int, []int, BulkRequest) {
 	retry := make([]int, 0)
 	noRetry := make([]int, 0)
-	//make a string index to avoid json decode for speed up over 90%+ scences
+	//make a string index to avoid json decode for speed up over 90%+ sciences
 	if bytes.Index(respBody, defaultNormalResp) != -1 {
 		return retry, noRetry, nil
 	}
@@ -169,8 +169,8 @@ func esGetRetryEvents(resp *http.Response, respBody []byte, bulkRequest *BulkReq
 			}
 		}
 	}
-	newbulkRequest := buildRetryBulkRequest(retry, noRetry, bulkRequest)
-	return retry, noRetry, newbulkRequest
+	newBulkRequest := buildRetryBulkRequest(retry, noRetry, bulkRequest)
+	return retry, noRetry, newBulkRequest
 }
 
 func buildRetryBulkRequest(shouldRetry, noRetry []int, bulkRequest *BulkRequest) BulkRequest {
@@ -186,7 +186,7 @@ func buildRetryBulkRequest(shouldRetry, noRetry []int, bulkRequest *BulkRequest)
 
 	if len(shouldRetry) > 0 {
 		newBulkRequest := &ESBulkRequest{
-			bulk_buf: make([]byte, 0),
+			bulkBuf: make([]byte, 0),
 		}
 		for _, i := range shouldRetry {
 			newBulkRequest.add(esBulkRequest.events[i])
@@ -232,9 +232,9 @@ func newElasticsearchOutput(config map[interface{}]interface{}) topology.Output 
 	}
 
 	if v, ok := config["index_type"]; ok {
-		rst.index_type = value_render.GetValueRender(v.(string))
+		rst.indexType = value_render.GetValueRender(v.(string))
 	} else {
-		rst.index_type = value_render.GetValueRender(defaultIndexType)
+		rst.indexType = value_render.GetValueRender(defaultIndexType)
 	}
 
 	if v, ok := config["id"]; ok {
@@ -250,47 +250,47 @@ func newElasticsearchOutput(config map[interface{}]interface{}) topology.Output 
 	}
 
 	if v, ok := config["source_field"]; ok {
-		rst.source_field = value_render.GetValueRender2(v.(string))
+		rst.sourceField = value_render.GetValueRender2(v.(string))
 	} else {
-		rst.source_field = nil
+		rst.sourceField = nil
 	}
 
 	if v, ok := config["bytes_source_field"]; ok {
-		rst.bytes_source_field = value_render.GetValueRender2(v.(string))
+		rst.bytesSourceField = value_render.GetValueRender2(v.(string))
 	} else {
-		rst.bytes_source_field = nil
+		rst.bytesSourceField = nil
 	}
 
 	if v, ok := config["es_version"]; ok {
-		rst.es_version = v.(int)
+		rst.esVersion = v.(int)
 	} else {
-		rst.es_version = defaultEsVersion
+		rst.esVersion = defaultEsVersion
 	}
 
 	var (
-		bulk_size, bulk_actions, flush_interval, concurrent int
-		compress                                            bool
+		bulkSize, bulkActions, flushInterval, concurrent int
+		compress                                         bool
 	)
 	if v, ok := config["bulk_size"]; ok {
-		bulk_size = v.(int) * 1024 * 1024
+		bulkSize = v.(int) * 1024 * 1024
 	} else {
-		bulk_size = DEFAULT_BULK_SIZE
+		bulkSize = DefaultBulkSize
 	}
 
 	if v, ok := config["bulk_actions"]; ok {
-		bulk_actions = v.(int)
+		bulkActions = v.(int)
 	} else {
-		bulk_actions = DEFAULT_BULK_ACTIONS
+		bulkActions = DefaultBulkActions
 	}
 	if v, ok := config["flush_interval"]; ok {
-		flush_interval = v.(int)
+		flushInterval = v.(int)
 	} else {
-		flush_interval = DEFAULT_FLUSH_INTERVAL
+		flushInterval = DefaultFlushInterval
 	}
 	if v, ok := config["concurrent"]; ok {
 		concurrent = v.(int)
 	} else {
-		concurrent = DEFAULT_CONCURRENT
+		concurrent = DefaultConcurrent
 	}
 	if concurrent <= 0 {
 		glog.Fatal("concurrent must > 0")
@@ -307,9 +307,9 @@ func newElasticsearchOutput(config map[interface{}]interface{}) topology.Output 
 			headers[keyI.(string)] = valueI.(string)
 		}
 	}
-	var requestMethod string = "POST"
+	var requestMethod = "POST"
 
-	var retryResponseCode map[int]bool = make(map[int]bool)
+	var retryResponseCode = make(map[int]bool)
 	if v, ok := config["retry_response_code"]; ok {
 		for _, cI := range v.([]interface{}) {
 			retryResponseCode[cI.(int)] = true
@@ -319,17 +319,17 @@ func newElasticsearchOutput(config map[interface{}]interface{}) topology.Output 
 		retryResponseCode[502] = true
 	}
 
-	byte_size_applied_in_advance := bulk_size + 1024*1024
-	if byte_size_applied_in_advance > MAX_BYTE_SIZE_APPLIED_IN_ADVANCE {
-		byte_size_applied_in_advance = MAX_BYTE_SIZE_APPLIED_IN_ADVANCE
+	byteSizeAppliedInAdvance := bulkSize + 1024*1024
+	if byteSizeAppliedInAdvance > MaxByteSizeAppliedInAdvance {
+		byteSizeAppliedInAdvance = MaxByteSizeAppliedInAdvance
 	}
 	var f = func() BulkRequest {
 		return &ESBulkRequest{
-			bulk_buf: make([]byte, 0, byte_size_applied_in_advance),
+			bulkBuf: make([]byte, 0, byteSizeAppliedInAdvance),
 		}
 	}
 
-	var hosts []string = make([]string, 0)
+	var hosts = make([]string, 0)
 	if v, ok := config["hosts"]; ok {
 		for _, h := range v.([]interface{}) {
 			user, password, host := getUserPasswordAndHost(h.(string))
@@ -370,14 +370,14 @@ func newElasticsearchOutput(config map[interface{}]interface{}) topology.Output 
 						if !reflect.DeepEqual(rst.hosts, hosts) {
 							glog.Infof("new hosts after sniff: %v", hosts)
 							rst.hosts = hosts
-							rst.bulkProcessor.(*HTTPBulkProcessor).resetHosts(rst.assebleHosts())
+							rst.bulkProcessor.(*HTTPBulkProcessor).resetHosts(rst.assembleHosts())
 						}
 					}
 				}
 			}()
 		}
 	}
-	rst.bulkProcessor = NewHTTPBulkProcessor(headers, rst.assebleHosts(), requestMethod, retryResponseCode, bulk_size, bulk_actions, flush_interval, concurrent, compress, f, esGetRetryEvents)
+	rst.bulkProcessor = NewHTTPBulkProcessor(headers, rst.assembleHosts(), requestMethod, retryResponseCode, bulkSize, bulkActions, flushInterval, concurrent, compress, f, esGetRetryEvents)
 	return rst
 }
 
@@ -416,7 +416,7 @@ func sniffNodes(config map[interface{}]interface{}) ([]string, error) {
 		if nodes, err := sniffNodesFromOneHost(host, match); err == nil {
 			return nodes, err
 		} else {
-			glog.Errorf("sniff nodes error from %s: %v", REMOVE_HTTP_AUTH_REGEXP.ReplaceAllString(host, "${1}"), err)
+			glog.Errorf("sniff nodes error from %s: %v", RemoveHttpAuthRegexp.ReplaceAllString(host, "${1}"), err)
 		}
 	}
 	return nil, errors.New("sniff nodes error from all hosts")
@@ -478,7 +478,7 @@ func filterNodesIPList(v map[string]interface{}, match string) ([]string, error)
 }
 
 // create ES host list using user, password and hosts
-func (p *ElasticsearchOutput) assebleHosts() (hosts []string) {
+func (p *ElasticsearchOutput) assembleHosts() (hosts []string) {
 	hosts = make([]string, 0)
 	for _, host := range p.hosts {
 		if len(p.user) > 0 {
@@ -493,12 +493,12 @@ func (p *ElasticsearchOutput) assebleHosts() (hosts []string) {
 // Emit adds the event to bulkProcessor
 func (p *ElasticsearchOutput) Emit(event map[string]interface{}) {
 	var (
-		index      string = p.index.Render(event).(string)
-		index_type string = p.index_type.Render(event).(string)
-		op         string = p.action
-		es_version int    = p.es_version
-		id         string
-		routing    string
+		index     = p.index.Render(event).(string)
+		indexType = p.indexType.Render(event).(string)
+		op        = p.action
+		esVersion = p.esVersion
+		id        string
+		routing   string
 	)
 	if p.id == nil {
 		id = ""
@@ -524,25 +524,25 @@ func (p *ElasticsearchOutput) Emit(event map[string]interface{}) {
 		}
 	}
 
-	if p.source_field == nil && p.bytes_source_field == nil {
-		p.bulkProcessor.add(&Action{op, index, index_type, id, routing, event, nil, es_version})
-	} else if p.bytes_source_field != nil {
-		t := p.bytes_source_field.Render(event)
+	if p.sourceField == nil && p.bytesSourceField == nil {
+		p.bulkProcessor.add(&Action{op, index, indexType, id, routing, event, nil, esVersion})
+	} else if p.bytesSourceField != nil {
+		t := p.bytesSourceField.Render(event)
 		if t == nil {
-			p.bulkProcessor.add(&Action{op, index, index_type, id, routing, event, nil, es_version})
+			p.bulkProcessor.add(&Action{op, index, indexType, id, routing, event, nil, esVersion})
 		} else {
-			p.bulkProcessor.add(&Action{op, index, index_type, id, routing, event, (t.([]byte)), es_version})
+			p.bulkProcessor.add(&Action{op, index, indexType, id, routing, event, t.([]byte), esVersion})
 		}
 	} else {
-		t := p.source_field.Render(event)
+		t := p.sourceField.Render(event)
 		if t == nil {
-			p.bulkProcessor.add(&Action{op, index, index_type, id, routing, event, nil, es_version})
+			p.bulkProcessor.add(&Action{op, index, indexType, id, routing, event, nil, esVersion})
 		} else {
-			p.bulkProcessor.add(&Action{op, index, index_type, id, routing, event, []byte(t.(string)), es_version})
+			p.bulkProcessor.add(&Action{op, index, indexType, id, routing, event, []byte(t.(string)), esVersion})
 		}
 	}
 }
 
-func (outputPlugin *ElasticsearchOutput) Shutdown() {
-	outputPlugin.bulkProcessor.awaitclose(30 * time.Second)
+func (p *ElasticsearchOutput) Shutdown() {
+	p.bulkProcessor.awaitclose(30 * time.Second)
 }

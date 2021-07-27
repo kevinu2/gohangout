@@ -9,7 +9,7 @@ import (
 
 func TestInJsonpath(t *testing.T) {
 	var condition string
-	var event map[string]interface{} = make(map[string]interface{})
+	var event = make(map[string]interface{})
 	event["tags"] = []interface{}{"app", "error", 10, 11.11}
 
 	// single test
@@ -645,7 +645,7 @@ func TestParseCondition(t *testing.T) {
 	}
 
 	event = make(map[string]interface{})
-	event["@timestamp"] = time.Now().Add(time.Duration(time.Second * 86500))
+	event["@timestamp"] = time.Now().Add(time.Second * 86500)
 	pass = root.Pass(event)
 	if !pass {
 		t.Errorf("`%s` %#v", condition, event)
@@ -665,7 +665,7 @@ func TestParseCondition(t *testing.T) {
 		t.Errorf("`%s` %#v", condition, event)
 	}
 	event = make(map[string]interface{})
-	event["@timestamp"] = time.Now().Add(time.Duration(time.Second * -86500))
+	event["@timestamp"] = time.Now().Add(time.Second * -86500)
 	pass = root.Pass(event)
 	if pass {
 		t.Errorf("`%s` %#v", condition, event)

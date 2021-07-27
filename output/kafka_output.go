@@ -3,11 +3,11 @@ package output
 import (
 	"encoding/json"
 
-	"github.com/childe/gohangout/codec"
-	"github.com/childe/gohangout/topology"
-	"github.com/childe/gohangout/value_render"
 	"github.com/childe/healer"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/codec"
+	"github.com/kevinu2/gohangout/topology"
+	"github.com/kevinu2/gohangout/value_render"
 )
 
 func init() {
@@ -42,16 +42,16 @@ func newKafkaOutput(config map[interface{}]interface{}) topology.Output {
 	for k, v := range pc.(map[interface{}]interface{}) {
 		newPc[k.(string)] = v
 	}
-	producer_settings := make(map[string]interface{})
+	producerSettings := make(map[string]interface{})
 	if b, err := json.Marshal(newPc); err != nil {
 		glog.Fatalf("could not init kafka producer config: %v", err)
 	} else {
-		json.Unmarshal(b, &producer_settings)
+		json.Unmarshal(b, &producerSettings)
 	}
 
-	glog.Info(producer_settings)
+	glog.Info(producerSettings)
 
-	producerConfig, err := healer.GetProducerConfig(producer_settings)
+	producerConfig, err := healer.GetProducerConfig(producerSettings)
 	if err != nil {
 		glog.Fatalf("could not init kafka producer config: %v", err)
 	}

@@ -12,8 +12,8 @@ import (
 
 	"github.com/oliveagle/jsonpath"
 
-	"github.com/childe/gohangout/value_render"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/value_render"
 )
 
 type Condition interface {
@@ -112,7 +112,7 @@ func (c *INCondition) Pass(event map[string]interface{}) bool {
 	}
 
 	var (
-		o map[string]interface{} = event
+		o = event
 	)
 
 	for _, path := range c.paths[:c.fn-1] {
@@ -150,8 +150,8 @@ func NewExistCondition(paths []string) *ExistCondition {
 
 func (c *ExistCondition) Pass(event map[string]interface{}) bool {
 	var (
-		o      map[string]interface{} = event
-		length int                    = len(c.paths)
+		o      = event
+		length = len(c.paths)
 	)
 	for _, path := range c.paths[:length-1] {
 		if v, ok := o[path]; ok && v != nil {
@@ -232,7 +232,7 @@ func (c *EQCondition) Pass(event map[string]interface{}) bool {
 	}
 
 	var (
-		o map[string]interface{} = event
+		o = event
 	)
 
 	for _, path := range c.paths[:c.fn-1] {
@@ -309,8 +309,8 @@ func (c *HasPrefixCondition) Pass(event map[string]interface{}) bool {
 	}
 
 	var (
-		o      map[string]interface{} = event
-		length int                    = len(c.paths)
+		o      = event
+		length = len(c.paths)
 	)
 
 	for _, path := range c.paths[:length-1] {
@@ -373,8 +373,8 @@ func (c *HasSuffixCondition) Pass(event map[string]interface{}) bool {
 	}
 
 	var (
-		o      map[string]interface{} = event
-		length int                    = len(c.paths)
+		o      = event
+		length = len(c.paths)
 	)
 
 	for _, path := range c.paths[:length-1] {
@@ -436,8 +436,8 @@ func (c *ContainsCondition) Pass(event map[string]interface{}) bool {
 	}
 
 	var (
-		o      map[string]interface{} = event
-		length int                    = len(c.paths)
+		o      = event
+		length = len(c.paths)
 	)
 
 	for _, path := range c.paths[:length-1] {
@@ -471,8 +471,8 @@ func NewContainsAnyCondition(paths []string, substring string) *ContainsAnyCondi
 
 func (c *ContainsAnyCondition) Pass(event map[string]interface{}) bool {
 	var (
-		o      map[string]interface{} = event
-		length int                    = len(c.paths)
+		o      = event
+		length = len(c.paths)
 	)
 
 	for _, path := range c.paths[:length-1] {
@@ -515,12 +515,12 @@ func NewMatchCondition(c string) (*MatchCondition, error) {
 		}
 
 		value := r[2]
-		regexp, err := regexp.Compile(value)
+		regexpStr, err := regexp.Compile(value)
 		if err != nil {
 			return nil, err
 		}
 
-		return &MatchCondition{pat, nil, regexp}, nil
+		return &MatchCondition{pat, nil, regexpStr}, nil
 	}
 
 	paths := make([]string, 0)
@@ -530,11 +530,11 @@ func NewMatchCondition(c string) (*MatchCondition, error) {
 	}
 	value := paths[len(paths)-1]
 	paths = paths[:len(paths)-1]
-	regexp, err := regexp.Compile(value)
+	regexpStr, err := regexp.Compile(value)
 	if err != nil {
 		return nil, err
 	}
-	return &MatchCondition{nil, paths, regexp}, nil
+	return &MatchCondition{nil, paths, regexpStr}, nil
 }
 
 func (c *MatchCondition) Pass(event map[string]interface{}) bool {
@@ -543,8 +543,8 @@ func (c *MatchCondition) Pass(event map[string]interface{}) bool {
 		return err == nil && c.regexp.MatchString(v.(string))
 	}
 	var (
-		o      map[string]interface{} = event
-		length int                    = len(c.paths)
+		o      = event
+		length = len(c.paths)
 	)
 
 	for _, path := range c.paths[:length-1] {
@@ -621,7 +621,7 @@ func (c *AfterCondition) Pass(event map[string]interface{}) bool {
 }
 
 func NewCondition(c string) Condition {
-	original_c := c
+	originalC := c
 
 	c = strings.Trim(c, " ")
 
@@ -630,7 +630,7 @@ func NewCondition(c string) Condition {
 	}
 
 	if root, err := parseBoolTree(c); err != nil {
-		glog.Errorf("could not build Condition from `%s` : %s", original_c, err)
+		glog.Errorf("could not build Condition from `%s` : %s", originalC, err)
 		return nil
 	} else {
 		return root
@@ -638,7 +638,7 @@ func NewCondition(c string) Condition {
 }
 
 func NewSingleCondition(c string) (Condition, error) {
-	original_c := c
+	originalC := c
 
 	// Exist
 	if matched, _ := regexp.MatchString(`^Exist\(.*\)$`, c); matched {
@@ -714,7 +714,7 @@ func NewSingleCondition(c string) (Condition, error) {
 		return NewAfterCondition(c), nil
 	}
 
-	return nil, fmt.Errorf("could not build Condition from `%s`", original_c)
+	return nil, fmt.Errorf("could not build Condition from `%s`", originalC)
 }
 
 type ConditionFilter struct {
@@ -761,13 +761,13 @@ func (root *OPNode) Pass(event map[string]interface{}) bool {
 		return root.condition.Pass(event)
 	}
 
-	if root.op == _op_and {
+	if root.op == opAnd {
 		return root.left.Pass(event) && root.right.Pass(event)
 	}
-	if root.op == _op_or {
+	if root.op == opOr {
 		return root.left.Pass(event) || root.right.Pass(event)
 	}
-	if root.op == _op_not {
+	if root.op == opNot {
 		return !root.right.Pass(event)
 	}
 	return false

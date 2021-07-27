@@ -1,8 +1,8 @@
 package topology
 
 import (
-	"github.com/childe/gohangout/condition_filter"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/condition_filter"
 )
 
 type Output interface {

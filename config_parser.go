@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 type Config map[string]interface{}

@@ -10,9 +10,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/childe/gohangout/topology"
-	"github.com/childe/gohangout/value_render"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/topology"
+	"github.com/kevinu2/gohangout/value_render"
 )
 
 func (grok *Grok) loadPattern(filename string) {
@@ -37,7 +37,7 @@ func (grok *Grok) loadPattern(filename string) {
 			break
 		}
 		if err != nil {
-			glog.Fatalf("read pattenrs error:%s", err)
+			glog.Fatalf("read pattern error:%s", err)
 		}
 		if isPrefix == true {
 			glog.Fatal("readline prefix")
@@ -47,15 +47,15 @@ func (grok *Grok) loadPattern(filename string) {
 		}
 		ss := strings.SplitN(string(line), " ", 2)
 		if len(ss) != 2 {
-			glog.Fatalf("splited `%s` length !=2", string(line))
+			glog.Fatalf("split `%s` length !=2", string(line))
 		}
 		grok.patterns[ss[0]] = ss[1]
 	}
 }
 
 func (grok *Grok) loadPatterns() {
-	for _, path := range grok.patternPaths {
-		files, err := getFiles(path)
+	for _, patternPath := range grok.patternPaths {
+		files, err := getFiles(patternPath)
 		if err != nil {
 			glog.Fatalf("build grok filter error: %s", err)
 		}
@@ -122,7 +122,7 @@ func (grok *Grok) translateMatchPattern(s string) string {
 	if err != nil {
 		glog.Fatal(err)
 	}
-	var r string = ""
+	var r = ""
 	for {
 		r = p.ReplaceAllStringFunc(s, grok.replaceFunc)
 		if r == s {
@@ -134,7 +134,7 @@ func (grok *Grok) translateMatchPattern(s string) string {
 
 type Grok struct {
 	p           *regexp.Regexp
-	subexpNames []string
+	subExpNames []string
 	ignoreBlank bool
 
 	patterns     map[string]string
@@ -144,13 +144,13 @@ type Grok struct {
 func (grok *Grok) grok(input string) map[string]string {
 	rst := make(map[string]string)
 	for i, substring := range grok.p.FindStringSubmatch(input) {
-		if grok.subexpNames[i] == "" {
+		if grok.subExpNames[i] == "" {
 			continue
 		}
 		if grok.ignoreBlank && substring == "" {
 			continue
 		}
-		rst[grok.subexpNames[i]] = substring
+		rst[grok.subExpNames[i]] = substring
 	}
 	return rst
 }
@@ -170,7 +170,7 @@ func NewGrok(match string, patternPaths []string, ignoreBlank bool) *Grok {
 		glog.Fatalf("could not build Grok:%s", err)
 	}
 	grok.p = p
-	grok.subexpNames = p.SubexpNames()
+	grok.subExpNames = p.SubexpNames()
 
 	return grok
 }
@@ -189,7 +189,7 @@ func init() {
 }
 
 func newGrokFilter(config map[interface{}]interface{}) topology.Filter {
-	var patternPaths []string = make([]string, 0)
+	var patternPaths = make([]string, 0)
 	if i, ok := config["pattern_paths"]; ok {
 		for _, p := range i.([]interface{}) {
 			patternPaths = append(patternPaths, p.(string))

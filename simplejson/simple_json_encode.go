@@ -1,7 +1,7 @@
 package simplejson
 
 /**
-MOST CODE IS COPYED FROM GOLANG JSON PACKAGE!
+MOST CODE IS COPIED FROM GOLANG JSON PACKAGE!
 since gohangout event has limited data type(int/float/map/array/time/string, NO struct), so we can use a simple way to do json encode
 **/
 
@@ -14,18 +14,18 @@ import (
 	"unicode/utf8"
 )
 
-type SimpleJsonDecoder struct {
+type Decoder struct {
 	bytes.Buffer
 	scratch [64]byte
 }
 
-type JSONMarshaler interface {
+type JSONMarshaller interface {
 	MarshalJSON() ([]byte, error)
 }
 
 var hex = "0123456789abcdef"
 
-func (d *SimpleJsonDecoder) string(s string) int {
+func (d *Decoder) string(s string) int {
 	len0 := d.Len()
 	d.WriteByte('"')
 	start := 0
@@ -101,7 +101,7 @@ func (d *SimpleJsonDecoder) string(s string) int {
 	return d.Len() - len0
 }
 
-func (d *SimpleJsonDecoder) encodeV(v interface{}) error {
+func (d *Decoder) encodeV(v interface{}) error {
 	if v == nil {
 		d.WriteString("null")
 		return nil
@@ -138,7 +138,7 @@ func (d *SimpleJsonDecoder) encodeV(v interface{}) error {
 	case reflect.Slice, reflect.Array:
 		return d.encodeSlice(v)
 	default:
-		if o, ok := v.(JSONMarshaler); ok {
+		if o, ok := v.(JSONMarshaller); ok {
 			if b, err := o.MarshalJSON(); err != nil {
 				return err
 			} else {
@@ -151,29 +151,29 @@ func (d *SimpleJsonDecoder) encodeV(v interface{}) error {
 	return nil
 }
 
-func (d *SimpleJsonDecoder) encodeSlice(value interface{}) error {
-        switch value.(type) {
+func (d *Decoder) encodeSlice(value interface{}) error {
+	switch value.(type) {
 	case []byte:
-                d.string(string(value.([]byte)))
+		d.string(string(value.([]byte)))
 	default:
-	        t := reflect.ValueOf(value)           	
-                d.WriteByte('[')
-	        n := t.Len()
-	        for i := 0; i < n; i++ {
-                        if i > 0 {
-	                        d.WriteByte(',')
-                        }
-	                d.encodeV(t.Index(i).Interface())
-	       }
-	       d.WriteByte(']')
-	       return nil
-        }
+		t := reflect.ValueOf(value)
+		d.WriteByte('[')
+		n := t.Len()
+		for i := 0; i < n; i++ {
+			if i > 0 {
+				d.WriteByte(',')
+			}
+			d.encodeV(t.Index(i).Interface())
+		}
+		d.WriteByte(']')
+		return nil
+	}
 	return nil
 }
 
-func (d *SimpleJsonDecoder) encodeFloat(f float64, bits int) error {
+func (d *Decoder) encodeFloat(f float64, bits int) error {
 	if math.IsInf(f, 0) || math.IsNaN(f) {
-		return fmt.Errorf("UnsupportedValueError %v %s", f, strconv.FormatFloat(f, 'g', -1, int(bits)))
+		return fmt.Errorf("UnsupportedValueError %v %s", f, strconv.FormatFloat(f, 'g', -1, bits))
 	}
 
 	// Convert as if by ES6 number to string conversion.
@@ -182,15 +182,15 @@ func (d *SimpleJsonDecoder) encodeFloat(f float64, bits int) error {
 	// Like fmt %g, but the exponent cutoffs are different
 	// and exponents themselves are not padded to two digits.
 	abs := math.Abs(f)
-	fmt := byte('f')
+	fmt2 := byte('f')
 	// Note: Must use float32 comparisons for underlying float32 value to get precise cutoffs right.
 	if abs != 0 {
 		if bits == 64 && (abs < 1e-6 || abs >= 1e21) || bits == 32 && (float32(abs) < 1e-6 || float32(abs) >= 1e21) {
-			fmt = 'e'
+			fmt2 = 'e'
 		}
 	}
-	b := strconv.AppendFloat(d.scratch[:0], f, fmt, -1, bits)
-	if fmt == 'e' {
+	b := strconv.AppendFloat(d.scratch[:0], f, fmt2, -1, bits)
+	if fmt2 == 'e' {
 		// clean up e-09 to e-9
 		n := len(b)
 		if n >= 4 && b[n-4] == 'e' && b[n-3] == '-' && b[n-2] == '0' {
@@ -202,7 +202,7 @@ func (d *SimpleJsonDecoder) encodeFloat(f float64, bits int) error {
 	return nil
 }
 
-func (d *SimpleJsonDecoder) encodeMap(e map[string]interface{}) error {
+func (d *Decoder) encodeMap(e map[string]interface{}) error {
 	if e == nil {
 		d.WriteString("null")
 		return nil
@@ -233,7 +233,7 @@ func (d *SimpleJsonDecoder) encodeMap(e map[string]interface{}) error {
 	return nil
 }
 
-func (d *SimpleJsonDecoder) encodeArray(v []interface{}) error {
+func (d *Decoder) encodeArray(v []interface{}) error {
 	d.WriteByte('[')
 	n := len(v)
 	for i := 0; i < n; i++ {
@@ -246,7 +246,7 @@ func (d *SimpleJsonDecoder) encodeArray(v []interface{}) error {
 	return nil
 }
 
-func (d *SimpleJsonDecoder) Encode(e interface{}) ([]byte, error) {
+func (d *Decoder) Encode(e interface{}) ([]byte, error) {
 	if err := d.encodeV(e); err != nil {
 		return nil, err
 	}

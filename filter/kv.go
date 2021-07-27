@@ -3,23 +3,23 @@ package filter
 import (
 	"strings"
 
-	"github.com/childe/gohangout/field_setter"
-	"github.com/childe/gohangout/topology"
-	"github.com/childe/gohangout/value_render"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/field_setter"
+	"github.com/kevinu2/gohangout/topology"
+	"github.com/kevinu2/gohangout/value_render"
 )
 
 type KVFilter struct {
-	config       map[interface{}]interface{}
-	fields       map[field_setter.FieldSetter]value_render.ValueRender
-	src          value_render.ValueRender
-	target       string
-	field_split  string
-	value_split  string
-	trim         string
-	trim_key     string
-	include_keys map[string]bool
-	exclude_keys map[string]bool
+	config      map[interface{}]interface{}
+	fields      map[field_setter.FieldSetter]value_render.ValueRender
+	src         value_render.ValueRender
+	target      string
+	fieldSplit  string
+	valueSplit  string
+	trim        string
+	trimKey     string
+	includeKeys map[string]bool
+	excludeKeys map[string]bool
 }
 
 func init() {
@@ -44,14 +44,14 @@ func newKVFilter(config map[interface{}]interface{}) topology.Filter {
 		plugin.target = ""
 	}
 
-	if field_split, ok := config["field_split"]; ok {
-		plugin.field_split = field_split.(string)
+	if fieldSplit, ok := config["field_split"]; ok {
+		plugin.fieldSplit = fieldSplit.(string)
 	} else {
 		glog.Fatal("field_split must be set in kv filter")
 	}
 
-	if value_split, ok := config["value_split"]; ok {
-		plugin.value_split = value_split.(string)
+	if valueSplit, ok := config["value_split"]; ok {
+		plugin.valueSplit = valueSplit.(string)
 	} else {
 		glog.Fatal("value_split must be set in kv filter")
 	}
@@ -62,23 +62,23 @@ func newKVFilter(config map[interface{}]interface{}) topology.Filter {
 		plugin.trim = ""
 	}
 
-	if trim_key, ok := config["trim_key"]; ok {
-		plugin.trim_key = trim_key.(string)
+	if trimKey, ok := config["trim_key"]; ok {
+		plugin.trimKey = trimKey.(string)
 	} else {
-		plugin.trim_key = ""
+		plugin.trimKey = ""
 	}
 
-	plugin.include_keys = make(map[string]bool)
-	if include_keys, ok := config["include_keys"]; ok {
-		for _, k := range include_keys.([]interface{}) {
-			plugin.include_keys[k.(string)] = true
+	plugin.includeKeys = make(map[string]bool)
+	if includeKeys, ok := config["include_keys"]; ok {
+		for _, k := range includeKeys.([]interface{}) {
+			plugin.includeKeys[k.(string)] = true
 		}
 	}
 
-	plugin.exclude_keys = make(map[string]bool)
-	if exclude_keys, ok := config["exclude_keys"]; ok {
-		for _, k := range exclude_keys.([]interface{}) {
-			plugin.exclude_keys[k.(string)] = true
+	plugin.excludeKeys = make(map[string]bool)
+	if excludeKeys, ok := config["exclude_keys"]; ok {
+		for _, k := range excludeKeys.([]interface{}) {
+			plugin.excludeKeys[k.(string)] = true
 		}
 	}
 
@@ -90,33 +90,33 @@ func (p *KVFilter) Filter(event map[string]interface{}) (map[string]interface{},
 	if msg == nil {
 		return event, false
 	}
-	A := strings.Split(msg.(string), p.field_split)
+	A := strings.Split(msg.(string), p.fieldSplit)
 	if len(A) == 1 {
 		return event, false
 	}
 
-	var o map[string]interface{} = event
+	var o = event
 	if p.target != "" {
 		o = make(map[string]interface{})
 		event[p.target] = o
 	}
 
-	var success bool = true
+	var success = true
 	var key string
 	for _, kv := range A {
-		a := strings.SplitN(kv, p.value_split, 2)
+		a := strings.SplitN(kv, p.valueSplit, 2)
 		if len(a) != 2 {
 			success = false
 			continue
 		}
 
-		key = strings.Trim(a[0], p.trim_key)
+		key = strings.Trim(a[0], p.trimKey)
 
-		if _, ok := p.exclude_keys[key]; ok {
+		if _, ok := p.excludeKeys[key]; ok {
 			continue
 		}
 
-		if _, ok := p.include_keys[key]; len(p.include_keys) == 0 || ok {
+		if _, ok := p.includeKeys[key]; len(p.includeKeys) == 0 || ok {
 			o[key] = strings.Trim(a[1], p.trim)
 		}
 	}

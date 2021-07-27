@@ -9,10 +9,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/childe/gohangout/field_setter"
-	"github.com/childe/gohangout/topology"
-	"github.com/childe/gohangout/value_render"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/field_setter"
+	"github.com/kevinu2/gohangout/topology"
+	"github.com/kevinu2/gohangout/value_render"
 )
 
 type DateParser interface {
@@ -173,7 +173,7 @@ func newDateFilter(config map[interface{}]interface{}) topology.Filter {
 
 	var (
 		location *time.Location
-		addYear  bool = false
+		addYear  = false
 		err      error
 	)
 	if locationI, ok := config["location"]; ok {

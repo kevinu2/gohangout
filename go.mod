@@ -1,4 +1,4 @@
-module github.com/childe/gohangout
+module github.com/kevinu2/gohangout
 
 go 1.13
 

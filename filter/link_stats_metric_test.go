@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/childe/gohangout/topology"
+	"github.com/kevinu2/gohangout/topology"
 )
 
 func createLinkStatsMetricEvents(now int64) []map[string]interface{} {
@@ -14,14 +14,14 @@ func createLinkStatsMetricEvents(now int64) []map[string]interface{} {
 
 func TestLinkStatsMetricFilter(t *testing.T) {
 	var (
-		config              map[interface{}]interface{}
-		f                   *LinkStatsMetricFilter
-		ok                  bool
-		batchWindow         int = 5
-		reserveWindow       int = 20
-		windowOffset        int = 0
-		ts                  int64
-		drop_original_event = true
+		config            map[interface{}]interface{}
+		f                 *LinkStatsMetricFilter
+		ok                bool
+		batchWindow       = 5
+		reserveWindow     = 20
+		windowOffset      = 0
+		ts                int64
+		dropOriginalEvent = true
 	)
 
 	config = make(map[interface{}]interface{})
@@ -29,7 +29,7 @@ func TestLinkStatsMetricFilter(t *testing.T) {
 	config["reserveWindow"] = reserveWindow
 	config["batchWindow"] = batchWindow
 	config["windowOffset"] = windowOffset
-	config["drop_original_event"] = drop_original_event
+	config["drop_original_event"] = dropOriginalEvent
 
 	f = (BuildFilter("LinkStatsMetric", config)).(*LinkStatsMetricFilter)
 	f.SetBelongTo(topology.NewFilterBox(config))
@@ -51,7 +51,7 @@ func TestLinkStatsMetricFilter(t *testing.T) {
 		t.Errorf("%v", f.metricToEmit[ts])
 	}
 
-	f.swap_Metric_MetricToEmit()
+	f.swapMetricMetricateMit()
 	t.Logf("metricToEmit %v", f.metricToEmit)
 	if len(f.metricToEmit) != 4 {
 		t.Error(f.metricToEmit)
@@ -75,49 +75,49 @@ func TestLinkStatsMetricFilter(t *testing.T) {
 
 	_10 := now - 10
 	ts = _10 - _10%(int64)(batchWindow)
-	_10_metric := f.metricToEmit[ts].(map[interface{}]interface{})
-	if len(_10_metric) != 2 {
+	metric := f.metricToEmit[ts].(map[interface{}]interface{})
+	if len(metric) != 2 {
 		t.Errorf("_10 metric length should be 2")
 	}
-	if _10_metric["localhost"] == nil {
+	if metric["localhost"] == nil {
 		t.Errorf("localhost should be in _10 metric")
 	}
-	if _10_metric["remote"] == nil {
+	if metric["remote"] == nil {
 		t.Errorf("remote should be in _10 metric")
 	}
 
-	localhost_metric := f.metricToEmit[ts].(map[interface{}]interface{})["localhost"].(map[interface{}]interface{})
-	if len(localhost_metric) != 2 {
+	localhostMetric := f.metricToEmit[ts].(map[interface{}]interface{})["localhost"].(map[interface{}]interface{})
+	if len(localhostMetric) != 2 {
 		t.Errorf("localhost metric length should be 2")
 	}
-	if localhost_metric["200"] == nil {
+	if localhostMetric["200"] == nil {
 		t.Errorf("200 should be in localhost_metric")
 	}
-	if localhost_metric["301"] == nil {
+	if localhostMetric["301"] == nil {
 		t.Errorf("301 should be in localhost_metric")
 	}
 
-	if len(localhost_metric["200"].(map[interface{}]interface{})) != 1 {
+	if len(localhostMetric["200"].(map[interface{}]interface{})) != 1 {
 		t.Errorf("%v", f.metricToEmit[ts])
 	}
-	if localhost_metric["200"].(map[interface{}]interface{})["responseTime"].(*stats).count != 2 {
+	if localhostMetric["200"].(map[interface{}]interface{})["responseTime"].(*stats).count != 2 {
 		t.Errorf("_10->localhost->200->responseTime-count should be 2")
 	}
-	if localhost_metric["200"].(map[interface{}]interface{})["responseTime"].(*stats).sum != 20.4 {
+	if localhostMetric["200"].(map[interface{}]interface{})["responseTime"].(*stats).sum != 20.4 {
 		t.Errorf("_10->localhost->200->responseTime-sum should be 20.4")
 	}
 }
 
 func TestLinkStatsMetricFilterWindowOffset(t *testing.T) {
 	var (
-		config              map[interface{}]interface{}
-		f                   *LinkStatsMetricFilter
-		ok                  bool
-		batchWindow         int = 5
-		reserveWindow       int = 20
-		windowOffset        int = 2
-		ts                  int64
-		drop_original_event = true
+		config            map[interface{}]interface{}
+		f                 *LinkStatsMetricFilter
+		ok                bool
+		batchWindow       = 5
+		reserveWindow     = 20
+		windowOffset      = 2
+		ts                int64
+		dropOriginalEvent = true
 	)
 
 	config = make(map[interface{}]interface{})
@@ -125,7 +125,7 @@ func TestLinkStatsMetricFilterWindowOffset(t *testing.T) {
 	config["reserveWindow"] = reserveWindow
 	config["batchWindow"] = batchWindow
 	config["windowOffset"] = windowOffset
-	config["drop_original_event"] = drop_original_event
+	config["drop_original_event"] = dropOriginalEvent
 
 	f = (BuildFilter("LinkStatsMetric", config)).(*LinkStatsMetricFilter)
 	f.SetBelongTo(topology.NewFilterBox(config))
@@ -147,7 +147,7 @@ func TestLinkStatsMetricFilterWindowOffset(t *testing.T) {
 		t.Errorf("%v", f.metricToEmit[ts])
 	}
 
-	f.swap_Metric_MetricToEmit()
+	f.swapMetricMetricateMit()
 	t.Logf("metricToEmit %v", f.metricToEmit)
 	if len(f.metricToEmit) != 2 {
 		t.Error(f.metricToEmit)
@@ -171,35 +171,35 @@ func TestLinkStatsMetricFilterWindowOffset(t *testing.T) {
 
 	_10 := now - 10
 	ts = _10 - _10%(int64)(batchWindow)
-	_10_metric := f.metricToEmit[ts].(map[interface{}]interface{})
-	if len(_10_metric) != 2 {
+	metric := f.metricToEmit[ts].(map[interface{}]interface{})
+	if len(metric) != 2 {
 		t.Errorf("_10 metric length should be 2")
 	}
-	if _10_metric["localhost"] == nil {
+	if metric["localhost"] == nil {
 		t.Errorf("localhost should be in _10 metric")
 	}
-	if _10_metric["remote"] == nil {
+	if metric["remote"] == nil {
 		t.Errorf("remote should be in _10 metric")
 	}
 
-	localhost_metric := f.metricToEmit[ts].(map[interface{}]interface{})["localhost"].(map[interface{}]interface{})
-	if len(localhost_metric) != 2 {
+	localhostMetric := f.metricToEmit[ts].(map[interface{}]interface{})["localhost"].(map[interface{}]interface{})
+	if len(localhostMetric) != 2 {
 		t.Errorf("localhost metric length should be 2")
 	}
-	if localhost_metric["200"] == nil {
+	if localhostMetric["200"] == nil {
 		t.Errorf("200 should be in localhost_metric")
 	}
-	if localhost_metric["301"] == nil {
+	if localhostMetric["301"] == nil {
 		t.Errorf("301 should be in localhost_metric")
 	}
 
-	if len(localhost_metric["200"].(map[interface{}]interface{})) != 1 {
+	if len(localhostMetric["200"].(map[interface{}]interface{})) != 1 {
 		t.Errorf("%v", f.metricToEmit[ts])
 	}
-	if localhost_metric["200"].(map[interface{}]interface{})["responseTime"].(*stats).count != 2 {
+	if localhostMetric["200"].(map[interface{}]interface{})["responseTime"].(*stats).count != 2 {
 		t.Errorf("_10->localhost->200->responseTime-count should be 2")
 	}
-	if localhost_metric["200"].(map[interface{}]interface{})["responseTime"].(*stats).sum != 20.4 {
+	if localhostMetric["200"].(map[interface{}]interface{})["responseTime"].(*stats).sum != 20.4 {
 		t.Errorf("_10->localhost->200->responseTime-sum should be 20.4")
 	}
 }
@@ -228,48 +228,48 @@ func _testLinkStatsMetricFilterAccumulateMode(t *testing.T, f *LinkStatsMetricFi
 
 	_10 := now - 10
 	ts = _10 - _10%f.batchWindow
-	_10_metric := f.metricToEmit[ts].(map[interface{}]interface{})
-	if len(_10_metric) != 2 {
+	metric := f.metricToEmit[ts].(map[interface{}]interface{})
+	if len(metric) != 2 {
 		t.Errorf("_10 metric length should be 2")
 	}
-	if _10_metric["localhost"] == nil {
+	if metric["localhost"] == nil {
 		t.Errorf("localhost should be in _10 metric")
 	}
-	if _10_metric["remote"] == nil {
+	if metric["remote"] == nil {
 		t.Errorf("remote should be in _10 metric")
 	}
 
-	localhost_metric := f.metricToEmit[ts].(map[interface{}]interface{})["localhost"].(map[interface{}]interface{})
-	if len(localhost_metric) != 2 {
+	localhostMetric := f.metricToEmit[ts].(map[interface{}]interface{})["localhost"].(map[interface{}]interface{})
+	if len(localhostMetric) != 2 {
 		t.Errorf("localhost metric length should be 2")
 	}
-	if localhost_metric["200"] == nil {
+	if localhostMetric["200"] == nil {
 		t.Errorf("200 should be in localhost_metric")
 	}
-	if localhost_metric["301"] == nil {
+	if localhostMetric["301"] == nil {
 		t.Errorf("301 should be in localhost_metric")
 	}
 
-	if len(localhost_metric["200"].(map[interface{}]interface{})) != 1 {
+	if len(localhostMetric["200"].(map[interface{}]interface{})) != 1 {
 		t.Errorf("%v", f.metricToEmit[ts])
 	}
-	if localhost_metric["200"].(map[interface{}]interface{})["responseTime"].(*stats).count != count {
+	if localhostMetric["200"].(map[interface{}]interface{})["responseTime"].(*stats).count != count {
 		t.Errorf("_10->localhost->200->responseTime-count should be %d", count)
 	}
-	if localhost_metric["200"].(map[interface{}]interface{})["responseTime"].(*stats).sum != sum {
+	if localhostMetric["200"].(map[interface{}]interface{})["responseTime"].(*stats).sum != sum {
 		t.Errorf("_10->localhost->200->responseTime-sum should be %f", sum)
 	}
 }
 
 func TestLinkStatsMetricFilterCumulativeMode(t *testing.T) {
 	var (
-		config              map[interface{}]interface{}
-		f                   *LinkStatsMetricFilter
-		batchWindow         int         = 5
-		reserveWindow       int         = 20
-		windowOffset        int         = 0
-		accumulateMode      interface{} = "cumulative"
-		drop_original_event             = true
+		config            map[interface{}]interface{}
+		f                 *LinkStatsMetricFilter
+		batchWindow                   = 5
+		reserveWindow                 = 20
+		windowOffset                  = 0
+		accumulateMode    interface{} = "cumulative"
+		dropOriginalEvent             = true
 	)
 
 	config = make(map[interface{}]interface{})
@@ -278,7 +278,7 @@ func TestLinkStatsMetricFilterCumulativeMode(t *testing.T) {
 	config["batchWindow"] = batchWindow
 	config["windowOffset"] = windowOffset
 	config["accumulateMode"] = accumulateMode
-	config["drop_original_event"] = drop_original_event
+	config["drop_original_event"] = dropOriginalEvent
 
 	f = (BuildFilter("LinkStatsMetric", config)).(*LinkStatsMetricFilter)
 	f.SetBelongTo(topology.NewFilterBox(config))
@@ -287,12 +287,12 @@ func TestLinkStatsMetricFilterCumulativeMode(t *testing.T) {
 	for _, event := range createLinkStatsMetricEvents(now) {
 		f.Filter(event)
 	}
-	f.swap_Metric_MetricToEmit()
+	f.swapMetricMetricateMit()
 	for _, event := range createLinkStatsMetricEvents(now) {
 		f.Filter(event)
 	}
 
-	f.swap_Metric_MetricToEmit()
+	f.swapMetricMetricateMit()
 	t.Logf("metricToEmit: %v", f.metricToEmit)
 
 	_testLinkStatsMetricFilterAccumulateMode(t, f, now, 4, 40.8)
@@ -300,13 +300,13 @@ func TestLinkStatsMetricFilterCumulativeMode(t *testing.T) {
 
 func TestLinkStatsMetricFilterSeparateMode(t *testing.T) {
 	var (
-		config              map[interface{}]interface{}
-		f                   *LinkStatsMetricFilter
-		batchWindow         int         = 5
-		reserveWindow       int         = 20
-		windowOffset        int         = 0
-		accumulateMode      interface{} = "separate"
-		drop_original_event             = true
+		config            map[interface{}]interface{}
+		f                 *LinkStatsMetricFilter
+		batchWindow                   = 5
+		reserveWindow                 = 20
+		windowOffset                  = 0
+		accumulateMode    interface{} = "separate"
+		dropOriginalEvent             = true
 	)
 
 	config = make(map[interface{}]interface{})
@@ -315,7 +315,7 @@ func TestLinkStatsMetricFilterSeparateMode(t *testing.T) {
 	config["batchWindow"] = batchWindow
 	config["windowOffset"] = windowOffset
 	config["accumulateMode"] = accumulateMode
-	config["drop_original_event"] = drop_original_event
+	config["drop_original_event"] = dropOriginalEvent
 
 	f = (BuildFilter("LinkStatsMetric", config)).(*LinkStatsMetricFilter)
 	f.SetBelongTo(topology.NewFilterBox(config))
@@ -324,12 +324,12 @@ func TestLinkStatsMetricFilterSeparateMode(t *testing.T) {
 	for _, event := range createLinkStatsMetricEvents(now) {
 		f.Filter(event)
 	}
-	f.swap_Metric_MetricToEmit()
+	f.swapMetricMetricateMit()
 	for _, event := range createLinkStatsMetricEvents(now) {
 		f.Filter(event)
 	}
 
-	f.swap_Metric_MetricToEmit()
+	f.swapMetricMetricateMit()
 	t.Logf("metricToEmit: %v", f.metricToEmit)
 	if len(f.metricToEmit) != 4 {
 		t.Error(f.metricToEmit)

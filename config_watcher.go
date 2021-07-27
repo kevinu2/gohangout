@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// watcher初始化的时候需要读取配置并返回一次configChannel
+// Watcher watcher初始化的时候需要读取配置并返回一次configChannel
 type Watcher interface {
 	watch(filename string, configChannel chan<- map[string]interface{}) error
 }

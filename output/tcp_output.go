@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/childe/gohangout/simplejson"
-	"github.com/childe/gohangout/topology"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/simplejson"
+	"github.com/kevinu2/gohangout/topology"
 )
 
 func init() {
@@ -71,7 +71,7 @@ func newTCPOutput(config map[interface{}]interface{}) topology.Output {
 			p.conn[i] = p.loopDial()
 			for {
 				event := <-p.messages
-				d := &simplejson.SimpleJsonDecoder{}
+				d := &simplejson.Decoder{}
 				buf, err := d.Encode(event)
 				if err != nil {
 					glog.Errorf("marshal %v error:%s", event, err)

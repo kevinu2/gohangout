@@ -3,10 +3,10 @@ package filter
 import (
 	"strings"
 
-	"github.com/childe/gohangout/field_setter"
-	"github.com/childe/gohangout/topology"
-	"github.com/childe/gohangout/value_render"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/field_setter"
+	"github.com/kevinu2/gohangout/topology"
+	"github.com/kevinu2/gohangout/value_render"
 )
 
 type SplitFilter struct {
@@ -76,7 +76,7 @@ func newSplitFilter(config map[interface{}]interface{}) topology.Filter {
 			plugin.fields = append(plugin.fields, field_setter.NewFieldSetter(f.(string)))
 		}
 	} else {
-		glog.Fatal("fileds must be set in split filter plugin")
+		glog.Fatal("fields must be set in split filter plugin")
 	}
 	plugin.fieldsLength = len(plugin.fields)
 

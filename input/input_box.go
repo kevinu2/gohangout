@@ -4,15 +4,15 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/childe/gohangout/field_setter"
-	"github.com/childe/gohangout/filter"
-	"github.com/childe/gohangout/output"
-	"github.com/childe/gohangout/topology"
-	"github.com/childe/gohangout/value_render"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/field_setter"
+	"github.com/kevinu2/gohangout/filter"
+	"github.com/kevinu2/gohangout/output"
+	"github.com/kevinu2/gohangout/topology"
+	"github.com/kevinu2/gohangout/value_render"
 )
 
-type InputBox struct {
+type Box struct {
 	config             map[string]interface{} // whole config
 	input              topology.Input
 	outputsInAllWorker [][]*topology.OutputBox
@@ -28,12 +28,12 @@ type InputBox struct {
 
 // SetShutdownWhenNil is used for benchmark.
 // Gohangout main thread would exit when one input box receive a nil message, such as Ctrl-D in Stdin input
-func (box *InputBox) SetShutdownWhenNil(shutdownWhenNil bool) {
-	box.shutdownWhenNil = shutdownWhenNil
+func (b *Box) SetShutdownWhenNil(shutdownWhenNil bool) {
+	b.shutdownWhenNil = shutdownWhenNil
 }
 
-func NewInputBox(input topology.Input, inputConfig map[interface{}]interface{}, config map[string]interface{}, mainThreadExitChan chan struct{}) *InputBox {
-	b := &InputBox{
+func NewInputBox(input topology.Input, inputConfig map[interface{}]interface{}, config map[string]interface{}, mainThreadExitChan chan struct{}) *Box {
+	b := &Box{
 		input:        input,
 		config:       config,
 		stop:         false,
@@ -41,9 +41,9 @@ func NewInputBox(input topology.Input, inputConfig map[interface{}]interface{}, 
 
 		mainThreadExitChan: mainThreadExitChan,
 	}
-	if add_fields, ok := inputConfig["add_fields"]; ok {
+	if addFields, ok := inputConfig["add_fields"]; ok {
 		b.addFields = make(map[field_setter.FieldSetter]value_render.ValueRender)
-		for k, v := range add_fields.(map[interface{}]interface{}) {
+		for k, v := range addFields.(map[interface{}]interface{}) {
 			fieldSetter := field_setter.NewFieldSetter(k.(string))
 			if fieldSetter == nil {
 				glog.Errorf("could build field setter from %s", k.(string))
@@ -57,38 +57,38 @@ func NewInputBox(input topology.Input, inputConfig map[interface{}]interface{}, 
 	return b
 }
 
-func (box *InputBox) beat(workerIdx int) {
-	var firstNode *topology.ProcessorNode = box.buildTopology(workerIdx)
+func (b *Box) beat(workerIdx int) {
+	var firstNode = b.buildTopology(workerIdx)
 
 	var (
 		event map[string]interface{}
 	)
 
-	for !box.stop {
-		event = box.input.ReadOneEvent()
+	for !b.stop {
+		event = b.input.ReadOneEvent()
 		if event == nil {
 			glog.V(5).Info("received nil message.")
-			if box.stop {
+			if b.stop {
 				break
 			}
-			if box.shutdownWhenNil {
+			if b.shutdownWhenNil {
 				glog.Info("received nil message. shutdown...")
-				box.mainThreadExitChan <- struct{}{}
+				b.mainThreadExitChan <- struct{}{}
 				break
 			} else {
 				continue
 			}
 		}
-		for fs, v := range box.addFields {
+		for fs, v := range b.addFields {
 			event = fs.SetField(event, v.Render(event), "", false)
 		}
 		firstNode.Process(event)
 	}
 }
 
-func (box *InputBox) buildTopology(workerIdx int) *topology.ProcessorNode {
-	outputs := topology.BuildOutputs(box.config, output.BuildOutput)
-	box.outputsInAllWorker[workerIdx] = outputs
+func (b *Box) buildTopology(workerIdx int) *topology.ProcessorNode {
+	outputs := topology.BuildOutputs(b.config, output.BuildOutput)
+	b.outputsInAllWorker[workerIdx] = outputs
 
 	var outputProcessor topology.Processor
 	if len(outputs) == 1 {
@@ -97,7 +97,7 @@ func (box *InputBox) buildTopology(workerIdx int) *topology.ProcessorNode {
 		outputProcessor = (topology.OutputsProcessor)(outputs)
 	}
 
-	filterBoxes := topology.BuildFilterBoxes(box.config, filter.BuildFilter)
+	filterBoxes := topology.BuildFilterBoxes(b.config, filter.BuildFilter)
 
 	var firstNode *topology.ProcessorNode
 	for _, b := range filterBoxes {
@@ -120,22 +120,22 @@ func (box *InputBox) buildTopology(workerIdx int) *topology.ProcessorNode {
 	return firstNode
 }
 
-func (box *InputBox) Beat(worker int) {
-	box.outputsInAllWorker = make([][]*topology.OutputBox, worker)
+func (b *Box) Beat(worker int) {
+	b.outputsInAllWorker = make([][]*topology.OutputBox, worker)
 	for i := 0; i < worker; i++ {
-		go box.beat(i)
+		go b.beat(i)
 	}
 
-	<-box.shutdownChan
+	<-b.shutdownChan
 }
 
-func (box *InputBox) shutdown() {
-	box.once.Do(func() {
+func (b *Box) shutdown() {
+	b.once.Do(func() {
 
-		glog.Infof("try to shutdown input %T", box.input)
-		box.input.Shutdown()
+		glog.Infof("try to shutdown input %T", b.input)
+		b.input.Shutdown()
 
-		for i, outputs := range box.outputsInAllWorker {
+		for i, outputs := range b.outputsInAllWorker {
 			for _, o := range outputs {
 				glog.Infof("try to shutdown output %T in worker %d", o, i)
 				o.Output.Shutdown()
@@ -143,10 +143,10 @@ func (box *InputBox) shutdown() {
 		}
 	})
 
-	box.shutdownChan <- true
+	b.shutdownChan <- true
 }
 
-func (box *InputBox) Shutdown() {
-	box.shutdown()
-	box.stop = true
+func (b *Box) Shutdown() {
+	b.shutdown()
+	b.stop = true
 }

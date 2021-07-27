@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/childe/gohangout/topology"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/topology"
 )
 
 type stats struct {
@@ -63,7 +63,7 @@ func newLinkStatsMetricFilter(config map[interface{}]interface{}) topology.Filte
 		p.fieldsWithoutLast = p.fields[:p.fieldsLength-1]
 		p.lastField = p.fields[p.fieldsLength-1]
 	} else {
-		glog.Fatal("fieldsLink must be set in linkstatmetric filter plugin")
+		glog.Fatal("fieldsLink must be set in link stat metric filter plugin")
 	}
 
 	if timestamp, ok := config["timestamp"]; ok {
@@ -81,13 +81,13 @@ func newLinkStatsMetricFilter(config map[interface{}]interface{}) topology.Filte
 	if batchWindow, ok := config["batchWindow"]; ok {
 		p.batchWindow = int64(batchWindow.(int))
 	} else {
-		glog.Fatal("batchWindow must be set in linkstatmetric filter plugin")
+		glog.Fatal("batchWindow must be set in link stat metric filter plugin")
 	}
 
 	if reserveWindow, ok := config["reserveWindow"]; ok {
 		p.reserveWindow = int64(reserveWindow.(int))
 	} else {
-		glog.Fatal("reserveWindow must be set in linkstatmetric filter plugin")
+		glog.Fatal("reserveWindow must be set in link stat metric filter plugin")
 	}
 
 	if reduce, ok := config["reduce"]; ok {
@@ -118,7 +118,7 @@ func newLinkStatsMetricFilter(config map[interface{}]interface{}) topology.Filte
 	ticker := time.NewTicker(time.Second * time.Duration(p.batchWindow))
 	go func() {
 		for range ticker.C {
-			p.swap_Metric_MetricToEmit()
+			p.swapMetricMetricateMit()
 			p.emitMetrics()
 		}
 	}()
@@ -127,8 +127,8 @@ func newLinkStatsMetricFilter(config map[interface{}]interface{}) topology.Filte
 
 func (f *LinkStatsMetricFilter) metricToEvents(metrics map[interface{}]interface{}, level int) []map[string]interface{} {
 	var (
-		fieldName string                   = f.fields[level]
-		events    []map[string]interface{} = make([]map[string]interface{}, 0)
+		fieldName = f.fields[level]
+		events    = make([]map[string]interface{}, 0)
 	)
 
 	if level == f.fieldsLength-1 {
@@ -159,7 +159,7 @@ func (f *LinkStatsMetricFilter) metricToEvents(metrics map[interface{}]interface
 	return events
 }
 
-func (f *LinkStatsMetricFilter) swap_Metric_MetricToEmit() {
+func (f *LinkStatsMetricFilter) swapMetricMetricateMit() {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 

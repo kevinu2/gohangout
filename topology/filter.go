@@ -3,11 +3,11 @@ package topology
 import (
 	"reflect"
 
-	"github.com/childe/gohangout/condition_filter"
-	"github.com/childe/gohangout/field_deleter"
-	"github.com/childe/gohangout/field_setter"
-	"github.com/childe/gohangout/value_render"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/condition_filter"
+	"github.com/kevinu2/gohangout/field_deleter"
+	"github.com/kevinu2/gohangout/field_setter"
+	"github.com/kevinu2/gohangout/value_render"
 )
 
 type Filter interface {
@@ -38,18 +38,18 @@ func NewFilterBox(config map[interface{}]interface{}) *FilterBox {
 		f.failTag = ""
 	}
 
-	if remove_fields, ok := config["remove_fields"]; ok {
+	if removeFields, ok := config["remove_fields"]; ok {
 		f.removeFields = make([]field_deleter.FieldDeleter, 0)
-		for _, field := range remove_fields.([]interface{}) {
+		for _, field := range removeFields.([]interface{}) {
 			f.removeFields = append(f.removeFields, field_deleter.NewFieldDeleter(field.(string)))
 		}
 	} else {
 		f.removeFields = nil
 	}
 
-	if add_fields, ok := config["add_fields"]; ok {
+	if addFields, ok := config["add_fields"]; ok {
 		f.addFields = make(map[field_setter.FieldSetter]value_render.ValueRender)
-		for k, v := range add_fields.(map[interface{}]interface{}) {
+		for k, v := range addFields.(map[interface{}]interface{}) {
 			fieldSetter := field_setter.NewFieldSetter(k.(string))
 			if fieldSetter == nil {
 				glog.Fatalf("could build field setter from %s", k.(string))
@@ -89,15 +89,15 @@ func (f *FilterBox) PostProcess(event map[string]interface{}, success bool) map[
 	return event
 }
 
-func (b *FilterBox) Process(event map[string]interface{}) map[string]interface{} {
+func (f *FilterBox) Process(event map[string]interface{}) map[string]interface{} {
 	var rst bool
 
-	if b.conditionFilter.Pass(event) {
-		event, rst = b.Filter.Filter(event)
+	if f.conditionFilter.Pass(event) {
+		event, rst = f.Filter.Filter(event)
 		if event == nil {
 			return nil
 		}
-		event = b.PostProcess(event, rst)
+		event = f.PostProcess(event, rst)
 	}
 	return event
 }

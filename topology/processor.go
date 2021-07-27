@@ -1,6 +1,6 @@
 package topology
 
-// FilterBox and OutputBox is Processor
+// Processor FilterBox and OutputBox is Processor
 type Processor interface {
 	Process(map[string]interface{}) map[string]interface{}
 }
@@ -17,7 +17,7 @@ type ProcessorNode struct {
 	Next      *ProcessorNode
 }
 
-// Processor will process event , and pass it to next, and then next , until last one(generally output)
+// Process Processor will process event , and pass it to next, and then next , until last one(generally output)
 func (node *ProcessorNode) Process(event map[string]interface{}) map[string]interface{} {
 	event = node.Processor.Process(event)
 	if event == nil || node.Next == nil {

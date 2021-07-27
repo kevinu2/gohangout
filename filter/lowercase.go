@@ -4,10 +4,10 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/childe/gohangout/field_setter"
-	"github.com/childe/gohangout/topology"
-	"github.com/childe/gohangout/value_render"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/field_setter"
+	"github.com/kevinu2/gohangout/topology"
+	"github.com/kevinu2/gohangout/value_render"
 )
 
 type LowercaseFilter struct {
@@ -34,12 +34,12 @@ func newLowercaseFilter(config map[interface{}]interface{}) topology.Filter {
 			plugin.fields[fieldSetter] = value_render.GetValueRender2(field.(string))
 		}
 	} else {
-		glog.Fatal("fileds must be set in remove filter plugin")
+		glog.Fatal("fields must be set in remove filter plugin")
 	}
 	return plugin
 }
 
-// 如果字段不是字符串, 返回false, 其它返回true
+// Filter 如果字段不是字符串, 返回false, 其它返回true
 func (plugin *LowercaseFilter) Filter(event map[string]interface{}) (map[string]interface{}, bool) {
 	success := true
 	for s, v := range plugin.fields {

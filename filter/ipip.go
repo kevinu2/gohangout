@@ -4,11 +4,11 @@ import (
 	"strconv"
 	"unsafe"
 
-	"github.com/childe/gohangout/topology"
-	"github.com/childe/gohangout/value_render"
 	"github.com/golang/glog"
-	datx "github.com/ipipdotnet/datx-go"
-	ipdb "github.com/ipipdotnet/ipdb-go"
+	"github.com/ipipdotnet/datx-go"
+	"github.com/ipipdotnet/ipdb-go"
+	"github.com/kevinu2/gohangout/topology"
+	"github.com/kevinu2/gohangout/value_render"
 )
 
 type IPIPFilter struct {
@@ -16,7 +16,7 @@ type IPIPFilter struct {
 	src       string
 	srcVR     value_render.ValueRender
 	target    string
-	data_type string
+	dataType  string
 	language  string
 	database  string
 	city      unsafe.Pointer
@@ -31,7 +31,7 @@ func newIPIPFilter(config map[interface{}]interface{}) topology.Filter {
 	plugin := &IPIPFilter{
 		config:    config,
 		target:    "geoip",
-		data_type: "datx",
+		dataType:  "datx",
 		language:  "CN",
 		overwrite: true,
 	}
@@ -39,8 +39,8 @@ func newIPIPFilter(config map[interface{}]interface{}) topology.Filter {
 	if overwrite, ok := config["overwrite"]; ok {
 		plugin.overwrite = overwrite.(bool)
 	}
-	if data_type, ok := config["type"]; ok {
-		plugin.data_type = data_type.(string)
+	if dataType, ok := config["type"]; ok {
+		plugin.dataType = dataType.(string)
 	}
 	if language, ok := config["language"]; ok {
 		plugin.language = language.(string)
@@ -52,7 +52,7 @@ func newIPIPFilter(config map[interface{}]interface{}) topology.Filter {
 			c2  *ipdb.City
 			err error
 		)
-		if plugin.data_type == "datx" {
+		if plugin.dataType == "datx" {
 			c1, err = datx.NewCity(plugin.database)
 			plugin.city = unsafe.Pointer(c1)
 		} else {
@@ -86,7 +86,7 @@ func (plugin *IPIPFilter) Filter(event map[string]interface{}) (map[string]inter
 	}
 	var a []string
 	var err error
-	if plugin.data_type == "datx" {
+	if plugin.dataType == "datx" {
 		city := (*datx.City)(plugin.city)
 		a, err = city.Find(inputI.(string))
 	} else {

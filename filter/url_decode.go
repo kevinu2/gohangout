@@ -4,10 +4,10 @@ import (
 	"net/url"
 	"reflect"
 
-	"github.com/childe/gohangout/field_setter"
-	"github.com/childe/gohangout/topology"
-	"github.com/childe/gohangout/value_render"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/field_setter"
+	"github.com/kevinu2/gohangout/topology"
+	"github.com/kevinu2/gohangout/value_render"
 )
 
 type URLDecodeFilter struct {
@@ -39,7 +39,7 @@ func newURLDecodeFilter(config map[interface{}]interface{}) topology.Filter {
 	return plugin
 }
 
-// 如果字段不是字符串, 返回false, 其它返回true
+// Filter 如果字段不是字符串, 返回false, 其它返回true
 func (plugin *URLDecodeFilter) Filter(event map[string]interface{}) (map[string]interface{}, bool) {
 	success := true
 	for s, v := range plugin.fields {

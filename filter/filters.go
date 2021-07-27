@@ -3,8 +3,8 @@ package filter
 import (
 	"reflect"
 
-	"github.com/childe/gohangout/topology"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/topology"
 )
 
 type FiltersFilter struct {
@@ -44,7 +44,7 @@ func (f *FiltersFilter) Filter(event map[string]interface{}) (map[string]interfa
 }
 
 func (f *FiltersFilter) SetBelongTo(next topology.Processor) {
-	var b *topology.FilterBox = f.filterBoxes[len(f.filterBoxes)-1]
+	var b = f.filterBoxes[len(f.filterBoxes)-1]
 	v := reflect.ValueOf(b.Filter)
 	fun := v.MethodByName("SetBelongTo")
 	if fun.IsValid() {

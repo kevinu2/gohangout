@@ -8,18 +8,18 @@ import (
 )
 
 const (
-	_op_sharp = iota
-	_op_left
-	_op_right
-	_op_or
-	_op_and
-	_op_not
+	opSharp = iota
+	opLeft
+	opRight
+	opOr
+	opAnd
+	opNot
 )
 
 const (
-	_OUTSIDES_CONDITION = iota
-	_IN_CONDITION
-	_IN_STRING
+	outsidesCondition = iota
+	inCondition
+	inString
 )
 
 var errorParse = errors.New("parse condition error")
@@ -52,7 +52,7 @@ func parseBoolTree(c string) (node *OPNode, err error) {
 		} else {
 			sLen := len(s)
 			op := e.(int)
-			if op == _op_not {
+			if op == opNot {
 				right := s[sLen-1].(*OPNode)
 				s = s[:sLen-1]
 				node := &OPNode{
@@ -83,13 +83,13 @@ func parseBoolTree(c string) (node *OPNode, err error) {
 
 func buildRPNStack(c string) ([]interface{}, error) {
 	var (
-		state               = _OUTSIDES_CONDITION
-		i                   int
-		length              = len(c)
-		parenthesis         = 0
-		condition_start_pos int
+		state             = outsidesCondition
+		i                 int
+		length            = len(c)
+		parenthesis       = 0
+		conditionStartPos int
 
-		s1 = []int{_op_sharp}
+		s1 = []int{opSharp}
 		s2 = make([]interface{}, 0)
 	)
 
@@ -99,22 +99,22 @@ func buildRPNStack(c string) ([]interface{}, error) {
 		switch c[i] {
 		case '(':
 			switch state {
-			case _OUTSIDES_CONDITION: // push s1
-				s1 = append(s1, _op_left)
-			case _IN_CONDITION:
+			case outsidesCondition: // push s1
+				s1 = append(s1, opLeft)
+			case inCondition:
 				parenthesis++
 			}
 		case ')':
 			switch state {
-			case _OUTSIDES_CONDITION:
-				if !pushOp(_op_right, &s1, &s2) {
+			case outsidesCondition:
+				if !pushOp(opRight, &s1, &s2) {
 					panic(c[:i+1])
 				}
 
-			case _IN_CONDITION:
+			case inCondition:
 				parenthesis--
 				if parenthesis == 0 {
-					condition, err := NewSingleCondition(c[condition_start_pos : i+1])
+					condition, err := NewSingleCondition(c[conditionStartPos : i+1])
 					if err != nil {
 						glog.Error(err)
 						panic(c[:i+1])
@@ -123,16 +123,16 @@ func buildRPNStack(c string) ([]interface{}, error) {
 						condition: condition,
 					}
 					s2 = append(s2, n)
-					state = _OUTSIDES_CONDITION
+					state = outsidesCondition
 				}
 			}
 		case '&':
 			switch state {
-			case _OUTSIDES_CONDITION: // push s1
+			case outsidesCondition: // push s1
 				if c[i+1] != '&' {
 					panic(c[:i+1])
 				} else {
-					if !pushOp(_op_and, &s1, &s2) {
+					if !pushOp(opAnd, &s1, &s2) {
 						panic(c[:i+1])
 					}
 					i++
@@ -140,11 +140,11 @@ func buildRPNStack(c string) ([]interface{}, error) {
 			}
 		case '|':
 			switch state {
-			case _OUTSIDES_CONDITION: // push s1
+			case outsidesCondition: // push s1
 				if c[i+1] != '|' {
 					panic(c[:i+1])
 				} else {
-					if !pushOp(_op_or, &s1, &s2) {
+					if !pushOp(opOr, &s1, &s2) {
 						panic(c[:i+1])
 					}
 					i++
@@ -152,33 +152,33 @@ func buildRPNStack(c string) ([]interface{}, error) {
 			}
 		case '!':
 			switch state {
-			case _OUTSIDES_CONDITION: // push s1
+			case outsidesCondition: // push s1
 				if n := c[i+1]; n == '|' || n == '&' || n == ' ' {
 					panic(c[:i+1])
 				}
-				if !pushOp(_op_not, &s1, &s2) {
+				if !pushOp(opNot, &s1, &s2) {
 					panic(c[:i+1])
 				}
 			}
 		case '"':
 			switch state {
-			case _OUTSIDES_CONDITION: // push s1
+			case outsidesCondition: // push s1
 				panic(c[:i+1])
-			case _IN_STRING:
-				state = _IN_CONDITION
+			case inString:
+				state = inCondition
 			}
 		case ' ':
 		default:
-			if state == _OUTSIDES_CONDITION {
-				state = _IN_CONDITION
-				condition_start_pos = i
+			if state == outsidesCondition {
+				state = inCondition
+				conditionStartPos = i
 			}
 
 		}
 		i++
 	}
 
-	if state != _OUTSIDES_CONDITION {
+	if state != outsidesCondition {
 		return nil, errorParse
 	}
 
@@ -190,7 +190,7 @@ func buildRPNStack(c string) ([]interface{}, error) {
 }
 
 func pushOp(op int, s1 *[]int, s2 *[]interface{}) bool {
-	if op == _op_right {
+	if op == opRight {
 		return findLeftInS1(s1, s2)
 	}
 	return compareOpWithS1(op, s1, s2)
@@ -199,7 +199,7 @@ func pushOp(op int, s1 *[]int, s2 *[]interface{}) bool {
 // find ( in s1
 func findLeftInS1(s1 *[]int, s2 *[]interface{}) bool {
 	var j int
-	for j = len(*s1) - 1; j > 0 && (*s1)[j] != _op_left; j-- {
+	for j = len(*s1) - 1; j > 0 && (*s1)[j] != opLeft; j-- {
 		*s2 = append(*s2, (*s1)[j])
 	}
 
@@ -219,11 +219,11 @@ func compareOpWithS1(op int, s1 *[]int, s2 *[]interface{}) bool {
 		n1 := (*s1)[j]
 		b := true
 		switch {
-		case n1 == _op_left:
+		case n1 == opLeft:
 			break
 		case op > n1:
 			break
-		case op == _op_not && n1 == _op_not:
+		case op == opNot && n1 == opNot:
 			break
 		default:
 			b = false

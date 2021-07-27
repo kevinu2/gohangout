@@ -11,25 +11,25 @@ import (
 	"sync/atomic"
 	"time"
 
-	clickhouse "github.com/ClickHouse/clickhouse-go"
-	"github.com/childe/gohangout/topology"
+	"github.com/ClickHouse/clickhouse-go"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/topology"
 )
 
 const (
-	CLICKHOUSE_DEFAULT_BULK_ACTIONS   = 1000
-	CLICKHOUSE_DEFAULT_FLUSH_INTERVAL = 30
+	ClickhouseDefaultBulkActions   = 1000
+	ClickhouseDefaultFlushInterval = 30
 )
 
 type ClickhouseOutput struct {
 	config map[interface{}]interface{}
 
-	bulk_actions int
-	hosts        []string
-	fields       []string
-	table        string
-	username     string
-	password     string
+	bulkActions int
+	hosts       []string
+	fields      []string
+	table       string
+	username    string
+	password    string
 
 	fieldsLength int
 	query        string
@@ -39,8 +39,8 @@ type ClickhouseOutput struct {
 	bulkChan   chan []map[string]interface{}
 	concurrent int
 
-	events       []map[string]interface{}
-	execution_id uint64
+	events      []map[string]interface{}
+	executionId uint64
 
 	dbSelector HostSelector
 
@@ -63,16 +63,15 @@ func (c *ClickhouseOutput) setTableDesc() {
 	glog.V(5).Info(query)
 
 	for i := 0; i < c.dbSelector.Size(); i++ {
-		nextdb := c.dbSelector.Next()
+		nextDb := c.dbSelector.Next()
 
-		db := nextdb.(*sql.DB)
+		db := nextDb.(*sql.DB)
 
 		rows, err := db.Query(query)
 		if err != nil {
 			glog.Errorf("query %q error: %s", query, err)
 			continue
 		}
-		defer rows.Close()
 
 		columns, err := rows.Columns()
 		if err != nil {
@@ -125,6 +124,7 @@ func (c *ClickhouseOutput) setTableDesc() {
 
 			c.desc[rowDesc.Name] = &rowDesc
 		}
+		rows.Close()
 
 		return
 	}
@@ -353,19 +353,19 @@ func newClickhouseOutput(config map[interface{}]interface{}) topology.Output {
 	}
 
 	if v, ok := config["bulk_actions"]; ok {
-		p.bulk_actions = v.(int)
+		p.bulkActions = v.(int)
 	} else {
-		p.bulk_actions = CLICKHOUSE_DEFAULT_BULK_ACTIONS
+		p.bulkActions = ClickhouseDefaultBulkActions
 	}
 
-	var flush_interval int
+	var flushInterval int
 	if v, ok := config["flush_interval"]; ok {
-		flush_interval = v.(int)
+		flushInterval = v.(int)
 	} else {
-		flush_interval = CLICKHOUSE_DEFAULT_FLUSH_INTERVAL
+		flushInterval = ClickhouseDefaultFlushInterval
 	}
 	go func() {
-		for range time.NewTicker(time.Second * time.Duration(flush_interval)).C {
+		for range time.NewTicker(time.Second * time.Duration(flushInterval)).C {
 			p.flush()
 		}
 	}()
@@ -374,33 +374,31 @@ func newClickhouseOutput(config map[interface{}]interface{}) topology.Output {
 }
 
 func (c *ClickhouseOutput) innerFlush(events []map[string]interface{}) {
-	execution_id := atomic.AddUint64(&c.execution_id, 1)
-	glog.Infof("write %d docs to clickhouse with execution_id %d", len(events), execution_id)
+	executionId := atomic.AddUint64(&c.executionId, 1)
+	glog.Infof("write %d docs to clickhouse with execution_id %d", len(events), executionId)
 
 	for {
-		nextdb := c.dbSelector.Next()
+		nextDb := c.dbSelector.Next()
 
 		/*** not ReduceWeight for now , so this should not happen
-		if nextdb == nil {
+		if nextDb == nil {
 			glog.Info("no available db, wait for 30s")
 			time.Sleep(30 * time.Second)
 			continue
 		}
 		****/
 
-		tx, err := nextdb.(*sql.DB).Begin()
+		tx, err := nextDb.(*sql.DB).Begin()
 		if err != nil {
 			glog.Errorf("db begin to create transaction error: %s", err)
 			continue
 		}
-		defer tx.Rollback()
 
 		stmt, err := tx.Prepare(c.query)
 		if err != nil {
 			glog.Errorf("transaction prepare statement error: %s", err)
 			return
 		}
-		defer stmt.Close()
 
 		for _, event := range events {
 			args := make([]interface{}, c.fieldsLength)
@@ -426,6 +424,8 @@ func (c *ClickhouseOutput) innerFlush(events []map[string]interface{}) {
 			return
 		}
 		glog.Infof("%d docs has been committed to clickhouse", len(events))
+		stmt.Close()
+		tx.Rollback()
 		return
 	}
 }
@@ -434,7 +434,7 @@ func (c *ClickhouseOutput) flush() {
 	c.mux.Lock()
 	if len(c.events) > 0 {
 		events := c.events
-		c.events = make([]map[string]interface{}, 0, c.bulk_actions)
+		c.events = make([]map[string]interface{}, 0, c.bulkActions)
 		c.bulkChan <- events
 	}
 	c.mux.Unlock()
@@ -444,19 +444,19 @@ func (c *ClickhouseOutput) flush() {
 func (c *ClickhouseOutput) Emit(event map[string]interface{}) {
 	c.mux.Lock()
 	c.events = append(c.events, event)
-	if len(c.events) < c.bulk_actions {
+	if len(c.events) < c.bulkActions {
 		c.mux.Unlock()
 		return
 	}
 
 	events := c.events
-	c.events = make([]map[string]interface{}, 0, c.bulk_actions)
+	c.events = make([]map[string]interface{}, 0, c.bulkActions)
 	c.mux.Unlock()
 
 	c.bulkChan <- events
 }
 
-func (c *ClickhouseOutput) awaitclose(timeout time.Duration) {
+func (c *ClickhouseOutput) awaitClose(timeout time.Duration) {
 	exit := make(chan bool)
 	defer func() {
 		select {
@@ -484,10 +484,10 @@ func (c *ClickhouseOutput) awaitclose(timeout time.Duration) {
 		c.mux.Unlock()
 	} else {
 		events := c.events
-		c.events = make([]map[string]interface{}, 0, c.bulk_actions)
+		c.events = make([]map[string]interface{}, 0, c.bulkActions)
 		c.mux.Unlock()
 
-		glog.Infof("ramain %d docs, write them to clickhouse", len(events))
+		glog.Infof("remain %d docs, write them to clickhouse", len(events))
 		c.wg.Add(1)
 		go func() {
 			c.innerFlush(events)
@@ -511,10 +511,10 @@ func (c *ClickhouseOutput) awaitclose(timeout time.Duration) {
 	}
 }
 
-// Shutdown would stop receiving message and emiting
+// Shutdown would stop receiving message and emitting
 func (c *ClickhouseOutput) Shutdown() {
 	for i := 0; i < c.concurrent; i++ {
 		c.closeChan <- true
 	}
-	c.awaitclose(30 * time.Second)
+	c.awaitClose(30 * time.Second)
 }

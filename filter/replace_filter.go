@@ -3,10 +3,10 @@ package filter
 import (
 	"strings"
 
-	"github.com/childe/gohangout/field_setter"
-	"github.com/childe/gohangout/topology"
-	"github.com/childe/gohangout/value_render"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/field_setter"
+	"github.com/kevinu2/gohangout/topology"
+	"github.com/kevinu2/gohangout/value_render"
 )
 
 type replaceConfig struct {
@@ -65,23 +65,23 @@ func newReplaceFilter(config map[interface{}]interface{}) topology.Filter {
 			}
 		}
 	} else {
-		glog.Fatal("fileds must be set in replace filter plugin")
+		glog.Fatal("fields must be set in replace filter plugin")
 	}
 	return p
 }
 
-// 如果字段不是字符串, 返回false, 其它返回true
+// Filter 如果字段不是字符串, 返回false, 其它返回true
 func (p *ReplaceFilter) Filter(event map[string]interface{}) (map[string]interface{}, bool) {
 	success := true
 	for _, f := range p.fields {
 		value := f.v.Render(event)
 		if value == nil {
-			continue
 			success = false
+			continue
 		}
 		if s, ok := value.(string); ok {
-			new := strings.Replace(s, f.old, f.new, f.n)
-			f.s.SetField(event, new, "", true)
+			replace := strings.Replace(s, f.old, f.new, f.n)
+			f.s.SetField(event, replace, "", true)
 		} else {
 			success = false
 		}

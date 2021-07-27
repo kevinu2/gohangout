@@ -3,9 +3,9 @@ package input
 import (
 	"net"
 
-	"github.com/childe/gohangout/codec"
-	"github.com/childe/gohangout/topology"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/codec"
+	"github.com/kevinu2/gohangout/topology"
 )
 
 type msg struct {
@@ -30,14 +30,14 @@ func init() {
 }
 
 func newUDPInput(config map[interface{}]interface{}) topology.Input {
-	var codertype string = "plain"
+	var coderType = "plain"
 	if v, ok := config["codec"]; ok {
-		codertype = v.(string)
+		coderType = v.(string)
 	}
 
 	p := &UDPInput{
 		config:   config,
-		decoder:  codec.NewDecoder(codertype),
+		decoder:  codec.NewDecoder(coderType),
 		messages: make(chan msg, 10),
 	}
 
@@ -77,7 +77,7 @@ func newUDPInput(config map[interface{}]interface{}) topology.Input {
 		p.addRemoteAddr = v.(string)
 	}
 
-	var max int = 65535
+	var max = 65535
 	if v, ok := config["max_length"]; ok {
 		max = v.(int)
 	}

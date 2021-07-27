@@ -1,7 +1,7 @@
 package codec
 
 import (
-	"github.com/childe/gohangout/simplejson"
+	"github.com/kevinu2/gohangout/simplejson"
 )
 
 type Encoder interface {
@@ -13,7 +13,7 @@ func NewEncoder(t string) Encoder {
 	case "json":
 		return &JsonEncoder{}
 	case "simplejson":
-		return &simplejson.SimpleJsonDecoder{}
+		return &simplejson.Decoder{}
 	}
 	panic(t + " encoder not supported")
 	return nil

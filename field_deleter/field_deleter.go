@@ -7,16 +7,15 @@ type FieldDeleter interface {
 }
 
 func NewFieldDeleter(template string) FieldDeleter {
-	matchp, _ := regexp.Compile(`(\[.*?\])+`)
-	findp, _ := regexp.Compile(`(\[(.*?)\])`)
-	if matchp.Match([]byte(template)) {
+	matches, _ := regexp.Compile(`(\[.*?\])+`)
+	finds, _ := regexp.Compile(`(\[(.*?)\])`)
+	if matches.Match([]byte(template)) {
 		fields := make([]string, 0)
-		for _, v := range findp.FindAllStringSubmatch(template, -1) {
+		for _, v := range finds.FindAllStringSubmatch(template, -1) {
 			fields = append(fields, v[2])
 		}
 		return NewMultiLevelFieldDeleter(fields)
 	} else {
 		return NewOneLevelFieldDeleter(template)
 	}
-	return nil
 }

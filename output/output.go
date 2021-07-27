@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"plugin"
 
-	"github.com/childe/gohangout/condition_filter"
-	"github.com/childe/gohangout/topology"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/condition_filter"
+	"github.com/kevinu2/gohangout/topology"
 )
 
 type BuildOutputFunc func(map[interface{}]interface{}) topology.Output
 
-var registeredOutput map[string]BuildOutputFunc = make(map[string]BuildOutputFunc)
+var registeredOutput = make(map[string]BuildOutputFunc)
 
 // Register is used by output plugins to register themselves
 func Register(outputType string, bf BuildOutputFunc) {

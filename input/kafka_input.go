@@ -4,10 +4,10 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/childe/gohangout/codec"
-	"github.com/childe/gohangout/topology"
 	"github.com/childe/healer"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/codec"
+	"github.com/kevinu2/gohangout/topology"
 )
 
 type KafkaInput struct {
@@ -28,13 +28,13 @@ func init() {
 
 func newKafkaInput(config map[interface{}]interface{}) topology.Input {
 	var (
-		codertype      string = "plain"
-		decorateEvents        = false
+		coderType      = "plain"
+		decorateEvents = false
 		topics         map[interface{}]interface{}
 		assign         map[string][]int
 	)
 
-	consumer_settings := make(map[string]interface{})
+	consumerSettings := make(map[string]interface{})
 	if v, ok := config["consumer_settings"]; !ok {
 		glog.Fatal("kafka input must have consumer_settings")
 	} else {
@@ -44,9 +44,9 @@ func newKafkaInput(config map[interface{}]interface{}) topology.Input {
 				for kk, vv := range y.(map[interface{}]interface{}) {
 					yy[kk.(string)] = vv
 				}
-				consumer_settings[x.(string)] = yy
+				consumerSettings[x.(string)] = yy
 			} else {
-				consumer_settings[x.(string)] = y
+				consumerSettings[x.(string)] = y
 			}
 		}
 	}
@@ -75,7 +75,7 @@ func newKafkaInput(config map[interface{}]interface{}) topology.Input {
 	}
 
 	if codecV, ok := config["codec"]; ok {
-		codertype = codecV.(string)
+		coderType = codecV.(string)
 	}
 
 	if decorateEventsV, ok := config["decorate_events"]; ok {
@@ -92,10 +92,10 @@ func newKafkaInput(config map[interface{}]interface{}) topology.Input {
 		decorateEvents: decorateEvents,
 		messages:       make(chan *healer.FullMessage, messagesLength),
 
-		decoder: codec.NewDecoder(codertype),
+		decoder: codec.NewDecoder(coderType),
 	}
 
-	consumerConfig, err := healer.GetConsumerConfig(consumer_settings)
+	consumerConfig, err := healer.GetConsumerConfig(consumerSettings)
 	if err != nil {
 		glog.Fatalf("error in consumer settings: %s", err)
 	}

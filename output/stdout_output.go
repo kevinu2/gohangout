@@ -3,9 +3,9 @@ package output
 import (
 	"fmt"
 
-	"github.com/childe/gohangout/codec"
-	"github.com/childe/gohangout/topology"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/codec"
+	"github.com/kevinu2/gohangout/topology"
 )
 
 func init() {

@@ -1,6 +1,6 @@
 package value_render
 
-// used for ES indexname template
+// used for ES indexing template
 
 import (
 	"encoding/json"
@@ -84,7 +84,7 @@ func NewIndexRender(t string) *IndexRender {
 	if lastPos < len(t) {
 		fields = append(fields, &field{
 			literal: true,
-			value:   t[lastPos:len(t)],
+			value:   t[lastPos:],
 		})
 	}
 	return &IndexRender{fields, time.UTC}
@@ -95,7 +95,7 @@ func NewIndexRender(t string) *IndexRender {
 func (r *IndexRender) SetTimeLocation(loc string) {
 	location, err := time.LoadLocation(loc)
 	if err != nil {
-		glog.Fatalf("invalid localtion: %s", loc)
+		glog.Fatalf("invalid location: %s", loc)
 	}
 	r.location = location
 }

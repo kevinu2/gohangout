@@ -4,9 +4,9 @@ import (
 	"math/rand"
 	"strconv"
 
-	"github.com/childe/gohangout/codec"
-	"github.com/childe/gohangout/topology"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/codec"
+	"github.com/kevinu2/gohangout/topology"
 )
 
 type RandomInput struct {
@@ -25,11 +25,11 @@ func init() {
 }
 
 func newRandomInput(config map[interface{}]interface{}) topology.Input {
-	var codertype string = "plain"
+	var coderType = "plain"
 
 	p := &RandomInput{
 		config:      config,
-		decoder:     codec.NewDecoder(codertype),
+		decoder:     codec.NewDecoder(coderType),
 		count:       0,
 		maxMessages: -1,
 	}

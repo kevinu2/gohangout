@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"net"
 
-	"github.com/childe/gohangout/codec"
-	"github.com/childe/gohangout/topology"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/codec"
+	"github.com/kevinu2/gohangout/topology"
 )
 
 type TCPInput struct {
@@ -39,14 +39,14 @@ func init() {
 	Register("TCP", newTCPInput)
 }
 func newTCPInput(config map[interface{}]interface{}) topology.Input {
-	var codertype string = "plain"
+	var coderType = "plain"
 	if v, ok := config["codec"]; ok {
-		codertype = v.(string)
+		coderType = v.(string)
 	}
 
 	p := &TCPInput{
 		config:   config,
-		decoder:  codec.NewDecoder(codertype),
+		decoder:  codec.NewDecoder(coderType),
 		messages: make(chan []byte, 10),
 	}
 

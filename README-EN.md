@@ -1,4 +1,5 @@
-Gohangout is an application to do data transport. It consumes data from `input plugin` such as kafka or tcp/udp , and do data transforms using `filter plugin`, and then emit data to `output plugin`, such as Elasticsearch or Clickhouse.
+Gohangout is an application to do data transport. It consumes data from `input plugin` such as kafka or tcp/udp , and do
+data transforms using `filter plugin`, and then emit data to `output plugin`, such as Elasticsearch or Clickhouse.
 
 ## Install
 
@@ -20,7 +21,7 @@ GOOS=linux GOARCH=amd64 CGO_ENABLED=0 make
 
 ### download binary
 
-[https://github.com/childe/gohangout/releases](https://github.com/childe/gohangout/releases) 
+[https://github.com/childe/gohangout/releases](https://github.com/childe/gohangout/releases)
 
 ### go get
 
@@ -30,11 +31,13 @@ go get github.com/childe/gohangout
 
 ### Third party plugin
 
-- Exmaples for developing 3th party plugin [gohangout-plugin-examples](https://github.com/childe/gohangout-plugin-examples)
+- Exmaples for developing 3th party
+  plugin [gohangout-plugin-examples](https://github.com/childe/gohangout-plugin-examples)
 - [Kafka Input using Saramp](https://github.com/DukeAnn/gohangout-input-kafka_sarama)
 - [Kafka Input using kafka-go](https://github.com/huangjacky/gohangout-input-kafkago)
 - [Redis Input](https://github.com/childe/gohangout-input-redis)
-- [Split Filter](https://github.com/childe/gohangout-plugin-examples/tree/master/gohangout-filter-split) Split one message to multi
+- [Split Filter](https://github.com/childe/gohangout-plugin-examples/tree/master/gohangout-filter-split) Split one
+  message to multi
 - [File Output](https://github.com/childe/gohangout-plugin-examples/tree/master/gohangout-file-output) file output
 
 ## Run
@@ -47,7 +50,7 @@ gohangout --config config.yml
 
 Gohangout use glog.
 
-use `-v n` to set log level. 
+use `-v n` to set log level.
 
 I usually set n to 5. You can set it to 10 or 20 to see more detailed log.
 
@@ -55,7 +58,8 @@ I usually set n to 5. You can set it to 10 or 20 to see more detailed log.
 
 --worker 4 (default 1)
 
-above args make gohangout use 4 goroutines to process data.  Notice: one thread to consume from input, and then have 4 goroutines to do filter and output.
+above args make gohangout use 4 goroutines to process data. Notice: one thread to consume from input, and then have 4
+goroutines to do filter and output.
 
 ### reload
 
@@ -135,11 +139,13 @@ More usage and examples: [https://goessner.net/articles/JsonPath/](https://goess
 
 **Not recommended, please use format 1**
 
-`city: '[geo][cityname]'` equals to `$.geo.cityname` . It must be strictly `[X][Y]`, in other words, there can not be any other words in front of `[X][Y]` or after it.
+`city: '[geo][cityname]'` equals to `$.geo.cityname` . It must be strictly `[X][Y]`, in other words, there can not be
+any other words in front of `[X][Y]` or after it.
 
 ### format 3 {{XXX}}
 
-Gohangout will render value using [Golang Template]((https://golang.org/pkg/text/template/)). It could contains other words before or after {{XXX}}, such as `name: 'my name is {{.firstname}}.{{.lastname}}'`
+Gohangout will render value using [Golang Template]((https://golang.org/pkg/text/template/)). It could contains other
+words before or after {{XXX}}, such as `name: 'my name is {{.firstname}}.{{.lastname}}'`
 
 One example you may use: We get a time-type field with `Date` filter, and then render a string with customed format.
 
@@ -157,7 +163,8 @@ for example, render index name in Elasticsearch output: `web-%{appid}-%{+2006-01
 
 ## Input
 
-All settings in below plugins could be checked in [Chinese doc](https://github.com/childe/gohangout/blob/master/README.md#input). 
+All settings in below plugins could be checked
+in [Chinese doc](https://github.com/childe/gohangout/blob/master/README.md#input).
 
 Setting and explanation in English doc will be added later.
 
@@ -194,7 +201,8 @@ more complicated example using bool operator: `Exist(a) && (!Exist(b) || !Exist(
 
 All functions supported for now:
 
-**NOtice**: value in EQ/IN functions must be quoted by " , because the value could be a number or a string.  User must tell Gohangout whether it is a string or a number.  
+**NOtice**: value in EQ/IN functions must be quoted by " , because the value could be a number or a string. User must
+tell Gohangout whether it is a string or a number.  
 value in other functions could be quoted by " or not , gohangout will treat it as string.
 
 - `Exist(user,name)` if [user][name] exists
@@ -233,7 +241,8 @@ Grok:
       grok_result: 'ok'
 ```
 
-Fields could be added if the filter process the event successfully. And it is ignored if filter failed to process the event.
+Fields could be added if the filter process the event successfully. And it is ignored if filter failed to process the
+event.
 
 #### remove_fields
 
@@ -248,7 +257,8 @@ Grok:
       grok_result: 'ok'
 ```
 
-remove some fields if the filter process the event successfully. And it is ignored if filter failed to process the event. 
+remove some fields if the filter process the event successfully. And it is ignored if filter failed to process the
+event.
 
 ### Filter Plugins
 

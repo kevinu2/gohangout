@@ -17,10 +17,12 @@ type TemplateValueRender struct {
 	tmpl *template.Template
 }
 
-var GOHANGOUT_TYPE_UNKNOWN_ERROR error = errors.New("field type unknown, it must be of json.Number|Int64|Int|int8")
-
-var ErrNotFloat64 error = errors.New("Only float64 type value could be calculated")
-var ErrNotInt64 error = errors.New("Only int64 type value could be calculated")
+//goland:noinspection ALL
+var (
+	GohangoutTypeUnknownError = errors.New("field type unknown, it must be of json.Number|Int64|Int|int8")
+	ErrNotFloat64             = errors.New("Only float64 type value could be calculated")
+	ErrNotInt64               = errors.New("Only int64 type value could be calculated")
+)
 
 var funcMap = template.FuncMap{}
 
@@ -35,7 +37,7 @@ func convertToInt(x interface{}) (int, error) {
 	} else if reflect.TypeOf(x).Kind() == reflect.Int8 {
 		return int(x.(int8)), nil
 	}
-	return 0, GOHANGOUT_TYPE_UNKNOWN_ERROR
+	return 0, GohangoutTypeUnknownError
 }
 
 func init() {
@@ -147,7 +149,7 @@ func NewTemplateValueRender(t string) *TemplateValueRender {
 	}
 }
 
-// always return string
+// Render always return string
 func (r *TemplateValueRender) Render(event map[string]interface{}) interface{} {
 	b := bytes.NewBuffer(nil)
 	if r.tmpl.Execute(b, event) != nil {

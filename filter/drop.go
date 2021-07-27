@@ -1,6 +1,6 @@
 package filter
 
-import "github.com/childe/gohangout/topology"
+import "github.com/kevinu2/gohangout/topology"
 
 type dropFilter struct {
 	config map[interface{}]interface{}

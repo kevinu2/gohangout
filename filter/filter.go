@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"plugin"
 
-	"github.com/childe/gohangout/topology"
 	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/topology"
 )
 
 type BuildFilterFunc func(map[interface{}]interface{}) topology.Filter
 
-var registeredFilter map[string]BuildFilterFunc = make(map[string]BuildFilterFunc)
+var registeredFilter = make(map[string]BuildFilterFunc)
 
 // Register is used by input plugins to register themselves
 func Register(filterType string, bf BuildFilterFunc) {
