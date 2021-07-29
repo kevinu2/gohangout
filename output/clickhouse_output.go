@@ -216,6 +216,10 @@ func (c *ClickhouseOutput) setColumnDefault() {
 			// 需要要求列声明的最小枚举值为 ''
 			c.defaultValue[columnName] = ""
 		default:
+			if strings.HasPrefix(d.Type, "DateTime64") {
+				c.defaultValue[columnName] = time.Unix(0, 0)
+				continue
+			}
 			glog.Errorf("column: %s, type: %s. unsupported column type, ignore.", columnName, d.Type)
 			continue
 		}
