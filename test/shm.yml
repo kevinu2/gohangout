@@ -2,6 +2,7 @@ inputs:
   - Shm:
       shm_key: 999999
       codec: json
-      decorate_events: true
+      decorate_events: false
+      messages_queue_length: 500
 outputs:
-  - Stdout: { }
+  - Stdout: {}
