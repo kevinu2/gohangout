@@ -1,0 +1,7 @@
+inputs:
+  - Shm:
+      shm_key: 999999
+      codec: json
+      decorate_events: true
+outputs:
+  - Stdout: { }
