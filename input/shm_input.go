@@ -6,6 +6,7 @@ package input
 import (
 	"github.com/golang/glog"
 	"github.com/kevinu2/gohangout/codec"
+	"github.com/kevinu2/gohangout/common"
 	"github.com/kevinu2/gohangout/topology"
 	"github.com/kevinu2/shm/ishm"
 	"sync"
@@ -35,9 +36,22 @@ const  (
 	eventTypeMaxLen = 30
 	topicNameMaxLen = 30
 	contentMaxLen = 40960
+	workingPoolSize = 500
+)
+
+var (
+    workingPool = common.NewEmptyPool()
 )
 
 func init() {
+	pool, err := common.NewPool(workingPoolSize, common.PoolOption{
+		ExpiryDuration: time.Minute * 2,
+	})
+	if err != nil {
+		glog.Error(err)
+	} else {
+		workingPool = pool
+	}
 	Register("Shm", newShmInput)
 }
 
@@ -151,7 +165,9 @@ func (p *ShmInput) startShmConsumer(shareMemory *ishm.SHMInfo, key int32)  {
 		tlv, status := consumer.Next()
 		switch status {
 		case ishm.ShmConsumerOk:
-			readAndSendTLVData(tlv, p.messages)
+			workingPool.Submit(func() {
+				readAndSendTLVData(tlv, p.messages)
+			})
 			continue
 		case ishm.ShmConsumerNoData:
 			time.Sleep(time.Microsecond * 500)
