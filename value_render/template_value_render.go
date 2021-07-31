@@ -51,6 +51,7 @@ func init() {
 	funcMap["hasprefix"] = strings.HasPrefix
 	funcMap["hassuffix"] = strings.HasSuffix
 	funcMap["replace"] = strings.Replace
+	funcMap["ipv4ToInt"] = ipV4toN
 
 	funcMap["timeFormat"] = func(t time.Time, format string) string {
 		return t.Format(format)

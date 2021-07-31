@@ -1,16 +1,15 @@
 // +build windows
 
-package main
+package task
 
 import (
+	"github.com/golang/glog"
 	"os"
 	"os/signal"
 	"syscall"
-
-	"github.com/golang/glog"
 )
 
-func listenSignal() {
+func listenSignal(inputs GoHangoutInputs, configChannel chan map[string]interface{}) {
 	c := make(chan os.Signal, 1)
 	var stop bool
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
@@ -21,11 +20,10 @@ func listenSignal() {
 		glog.Infof("capture signal: %v", sig)
 		switch sig {
 		case syscall.SIGINT, syscall.SIGTERM:
-			inputs.stop()
+			inputs.Stop()
 			close(configChannel)
 			stop = true
 		}
-
 		if stop {
 			break
 		}

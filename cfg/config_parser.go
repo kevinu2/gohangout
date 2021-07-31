@@ -1,12 +1,11 @@
-package main
+package cfg
 
 import (
 	"errors"
-	"regexp"
-	"strings"
-
 	"github.com/golang/glog"
 	"gopkg.in/yaml.v2"
+	"regexp"
+	"strings"
 )
 
 type Config map[string]interface{}
@@ -15,13 +14,18 @@ type Parser interface {
 	parse(filename string) (map[string]interface{}, error)
 }
 
-func parseConfig(filename string) (map[string]interface{}, error) {
+func ParseConfig(filename string) (map[string]interface{}, error) {
 	lowerFilename := strings.ToLower(filename)
 	if strings.HasSuffix(lowerFilename, ".yaml") || strings.HasSuffix(lowerFilename, ".yml") {
 		yp := &YamlParser{}
 		return yp.parse(filename)
 	}
 	return nil, errors.New("unknown config format. config filename should ends with yaml|yml")
+}
+
+func ParseBytesConfig(content []byte) (map[string]interface{}, error) {
+	yp := &YamlParser{}
+	return yp.parseYpBytes(content)
 }
 
 // remove sensitive info before output

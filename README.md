@@ -1,4 +1,4 @@
-[ENG](https://github.com/childe/gohangout/blob/master/README-EN.md#input)
+[ENG](https://github.com/kevinu2/gohangout/blob/master/README-EN.md#input)
 
 之前因为 [logstash](https://www.elastic.co/products/logstash) 处理数据的效率比较低, 用 java 模仿 Logstash
 写了一个java版本的 [https://github.com/childe/hangout](https://github.com/childe/hangout). 不知道现在 Logstash 效率怎么样了, 很久不用了.
@@ -25,21 +25,21 @@
 
 ### 下载编译后二进制文件
 
-[https://github.com/childe/gohangout/releases](https://github.com/childe/gohangout/releases) 直接下载
+[https://github.com/kevinu2/gohangout/releases](https://github.com/kevinu2/gohangout/releases) 直接下载
 
 ### go get
 
-> go get github.com/childe/gohangout
+> go get github.com/kevinu2/gohangout
 
 ### 第三方 Plugin
 
-- 开发 Plugin 的例子 [gohangout-plugin-examples](https://github.com/childe/gohangout-plugin-examples)
+- 开发 Plugin 的例子 [gohangout-plugin-examples](https://github.com/kevinu2/gohangout-plugin-examples)
 - [使用sarama 的Kafka Input](https://github.com/DukeAnn/gohangout-input-kafka_sarama)
 - [使用 confluent-kafka-go 的Kafka Input](https://github.com/arterhuo/gohangout-input-confluent-kafka-go)
 - [使用kafka-go 的Kafka Input](https://github.com/huangjacky/gohangout-input-kafkago)
-- [Redis Input](https://github.com/childe/gohangout-input-redis)
-- [Split Filter](https://github.com/childe/gohangout-plugin-examples/tree/master/gohangout-filter-split) 一条消息Split 成多条
-- [File Output](https://github.com/childe/gohangout-plugin-examples/tree/master/gohangout-file-output) 输出到文件
+- [Redis Input](https://github.com/kevinu2/gohangout-input-redis)
+- [Split Filter](https://github.com/kevinu2/gohangout-plugin-examples/tree/master/gohangout-filter-split) 一条消息Split 成多条
+- [File Output](https://github.com/kevinu2/gohangout-plugin-examples/tree/master/gohangout-file-output) 输出到文件
 
 ## 运行
 
@@ -87,10 +87,10 @@ Consumer, 后面多线程的处理这些数据.
 
 ## 开发新的插件
 
-- Filter 插件示例参考  [gohangout-filter-title](https://github.com/childe/gohangout-filter-title)
-- Input 插件示例参考 [gohangout-input-dot](https://github.com/childe/gohangout-input-dot)
-- Output 插件示例参考 [gohangout-output-dash](https://github.com/childe/gohangout-output-dash)
-- Decoder 插件示例参考 [gohangout-decode-empty](https://github.com/childe/gohangout-decode-empty)
+- Filter 插件示例参考  [gohangout-filter-title](https://github.com/kevinu2/gohangout-filter-title)
+- Input 插件示例参考 [gohangout-input-dot](https://github.com/kevinu2/gohangout-input-dot)
+- Output 插件示例参考 [gohangout-output-dash](https://github.com/kevinu2/gohangout-output-dash)
+- Decoder 插件示例参考 [gohangout-decode-empty](https://github.com/kevinu2/gohangout-decode-empty)
 
 ## 配置
 
@@ -626,7 +626,7 @@ Add:
       '[a][b]': '[stored][message]'
 ```
 
-**更多写法参见 [字段格式约定](https://github.com/childe/gohangout/#%E5%AD%97%E6%AE%B5%E6%A0%BC%E5%BC%8F%E7%BA%A6%E5%AE%9A)**
+**更多写法参见 [字段格式约定](https://github.com/kevinu2/gohangout/#%E5%AD%97%E6%AE%B5%E6%A0%BC%E5%BC%8F%E7%BA%A6%E5%AE%9A)**
 
 1. 增加 name 字段, 内容是 childe
 2. 增加 hostname 字段, 内容是原 host 字段中的内容. (相当于改名)

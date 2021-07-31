@@ -1,0 +1,10 @@
+task-shard-prefix: task-shard
+rule-load-mode: CMD #CMD,CONFIG_DIR,RPC
+hangout-rpc:
+  address: "127.0.0.1:8972"
+hangout-pg:
+  host: 127.0.0.1
+  port: 5432
+  db: postgres
+  user: postgres
+  password: 123456

@@ -1,12 +1,12 @@
 package input
 
 import (
-	"math/rand"
-	"strconv"
-
 	"github.com/golang/glog"
 	"github.com/kevinu2/gohangout/codec"
 	"github.com/kevinu2/gohangout/topology"
+	"math/rand"
+	"strconv"
+	"time"
 )
 
 type RandomInput struct {
@@ -25,11 +25,11 @@ func init() {
 }
 
 func newRandomInput(config map[interface{}]interface{}) topology.Input {
-	var coderType = "plain"
+	var codertype string = "plain"
 
 	p := &RandomInput{
 		config:      config,
-		decoder:     codec.NewDecoder(coderType),
+		decoder:     codec.NewDecoder(codertype),
 		count:       0,
 		maxMessages: -1,
 	}
@@ -54,10 +54,11 @@ func newRandomInput(config map[interface{}]interface{}) topology.Input {
 }
 
 func (p *RandomInput) ReadOneEvent() map[string]interface{} {
-	if p.maxMessages != -1 && p.count >= p.maxMessages {
-		return nil
-	}
-	n := p.from + rand.Intn(1+p.to-p.from)
+	//if p.maxMessages != -1 && p.count >= p.maxMessages {
+	//	return nil
+	//}
+    time.Sleep(time.Second * 1)
+	n := p.from + rand.Intn(2000)
 	p.count++
 	return p.decoder.Decode([]byte(strconv.Itoa(n)))
 }

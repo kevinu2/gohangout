@@ -21,24 +21,24 @@ GOOS=linux GOARCH=amd64 CGO_ENABLED=0 make
 
 ### download binary
 
-[https://github.com/childe/gohangout/releases](https://github.com/childe/gohangout/releases)
+[https://github.com/kevinu2/gohangout/releases](https://github.com/kevinu2/gohangout/releases)
 
 ### go get
 
 ```
-go get github.com/childe/gohangout
+go get github.com/kevinu2/gohangout
 ```
 
 ### Third party plugin
 
 - Exmaples for developing 3th party
-  plugin [gohangout-plugin-examples](https://github.com/childe/gohangout-plugin-examples)
+  plugin [gohangout-plugin-examples](https://github.com/kevinu2/gohangout-plugin-examples)
 - [Kafka Input using Saramp](https://github.com/DukeAnn/gohangout-input-kafka_sarama)
 - [Kafka Input using kafka-go](https://github.com/huangjacky/gohangout-input-kafkago)
-- [Redis Input](https://github.com/childe/gohangout-input-redis)
-- [Split Filter](https://github.com/childe/gohangout-plugin-examples/tree/master/gohangout-filter-split) Split one
+- [Redis Input](https://github.com/kevinu2/gohangout-input-redis)
+- [Split Filter](https://github.com/kevinu2/gohangout-plugin-examples/tree/master/gohangout-filter-split) Split one
   message to multi
-- [File Output](https://github.com/childe/gohangout-plugin-examples/tree/master/gohangout-file-output) file output
+- [File Output](https://github.com/kevinu2/gohangout-plugin-examples/tree/master/gohangout-file-output) file output
 
 ## Run
 
@@ -164,7 +164,7 @@ for example, render index name in Elasticsearch output: `web-%{appid}-%{+2006-01
 ## Input
 
 All settings in below plugins could be checked
-in [Chinese doc](https://github.com/childe/gohangout/blob/master/README.md#input).
+in [Chinese doc](https://github.com/kevinu2/gohangout/blob/master/README.md#input).
 
 Setting and explanation in English doc will be added later.
 

@@ -2,120 +2,87 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"github.com/golang/glog"
+	"github.com/kevinu2/gohangout/cfg"
+	"github.com/kevinu2/gohangout/common"
+	"github.com/kevinu2/gohangout/rpc"
+	"github.com/kevinu2/gohangout/task"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"runtime"
 	"runtime/pprof"
-	"sync"
-
-	"github.com/golang/glog"
-	"github.com/kevinu2/gohangout/input"
-	"github.com/kevinu2/gohangout/topology"
+	"strings"
 )
 
-var options = &struct {
+var cmdOptions = &struct {
 	config     string
 	autoReload bool // 配置文件更新自动重启
 	pprof      bool
 	pprofAddr  string
 	cpuProfile string
 	memProfile string
-
 	exitWhenNil bool
+	minLogLevel int
+	worker     int
+	taskShard  string
 }{}
 
 var (
-	worker = flag.Int("worker", 1, "worker thread count")
+	mainThreadExitChan = make(chan struct{}, 0)
+	ruleLoadMode  common.RuleLoadMode
+	appConfig    *cfg.AppConfig
+	taskManager *task.TskManager
 )
 
-type gohangoutInputs []*input.Box
-
-var inputs gohangoutInputs
-
-var mainThreadExitChan = make(chan struct{}, 0)
-
-func (inputs gohangoutInputs) start() {
-	boxes := ([]*input.Box)(inputs)
-	var wg sync.WaitGroup
-	wg.Add(len(boxes))
-
-	for i := range boxes {
-		go func(i int) {
-			defer wg.Done()
-			boxes[i].Beat(*worker)
-		}(i)
-	}
-
-	wg.Wait()
-}
-
-func (inputs gohangoutInputs) stop() {
-	boxes := ([]*input.Box)(inputs)
-	for _, box := range boxes {
-		box.Shutdown()
-	}
-}
-
 func init() {
-	flag.StringVar(&options.config, "config", options.config, "path to configuration file or directory")
-	flag.BoolVar(&options.autoReload, "reload", options.autoReload, "if auto reload while config file changed")
-
-	flag.BoolVar(&options.pprof, "pprof", false, "pprof or not")
-	flag.StringVar(&options.pprofAddr, "pprof-address", "127.0.0.1:8899", "default: 127.0.0.1:8899")
-	flag.StringVar(&options.cpuProfile, "cpu-profile", "", "write cpu profile to `file`")
-	flag.StringVar(&options.memProfile, "mem-profile", "", "write mem profile to `file`")
-
-	flag.BoolVar(&options.exitWhenNil, "exit-when-nil", false, "triger gohangout to exit when receive a nil event")
+	flag.StringVar(&cmdOptions.config, "config", cmdOptions.config, "path to configuration file or directory")
+	flag.BoolVar(&cmdOptions.autoReload, "reload", cmdOptions.autoReload, "if auto reload while config file changed")
+	flag.BoolVar(&cmdOptions.pprof, "pprof", false, "pprof or not")
+	flag.StringVar(&cmdOptions.pprofAddr, "pprof-address", "127.0.0.1:8899", "default: 127.0.0.1:8899")
+	flag.StringVar(&cmdOptions.cpuProfile, "cpu-profile", "", "write cpu profile to `file`")
+	flag.StringVar(&cmdOptions.memProfile, "mem-profile", "", "write mem profile to `file`")
+	flag.BoolVar(&cmdOptions.exitWhenNil, "exit-when-nil", false, "triger gohangout to exit when receive a nil event")
+	flag.IntVar(&cmdOptions.worker, "worker", 1, "worker thread count")
+	flag.StringVar(&cmdOptions.taskShard, "task-shard", "0", "task running shard index")
 
 	flag.Parse()
-}
-
-func buildPluginLink(config map[string]interface{}) (boxes []*input.Box, err error) {
-	boxes = make([]*input.Box, 0)
-
-	for inputIdx, inputI := range config["inputs"].([]interface{}) {
-		var inputPlugin topology.Input
-
-		i := inputI.(map[interface{}]interface{})
-		glog.Infof("input[%d] %v", inputIdx+1, i)
-
-		// len(i) is 1
-		for inputTypeI, inputConfigI := range i {
-			inputType := inputTypeI.(string)
-			inputConfig := inputConfigI.(map[interface{}]interface{})
-
-			inputPlugin = input.GetInput(inputType, inputConfig)
-			if inputPlugin == nil {
-				err = fmt.Errorf("invalid input plugin")
-				return
-			}
-
-			box := input.NewInputBox(inputPlugin, inputConfig, config, mainThreadExitChan)
-			if box == nil {
-				err = fmt.Errorf("new input box fail")
-				return
-			}
-			box.SetShutdownWhenNil(options.exitWhenNil)
-			boxes = append(boxes, box)
-		}
+	cfg.InitAppConfig()
+	appConfig = cfg.GetAppConfig()
+	taskShardPrefix := ""
+	if appConfig != nil {
+		ruleLoadMode = appConfig.RuleLoadMode
+		taskShardPrefix = appConfig.TaskShardPrefix
 	}
-
-	return
+	if ruleLoadMode == "" {
+		ruleLoadMode = common.Cmd
+	}
+	cmdOptions := task.CmdOptions{
+		AutoReload: cmdOptions.autoReload,
+		ExitWhenNil: cmdOptions.exitWhenNil,
+		Worker: cmdOptions.worker,
+		ConfigFilePath: cmdOptions.config,
+		TaskShard: strings.Join([]string{taskShardPrefix, cmdOptions.taskShard}, ""),
+	}
+	taskManager = task.GetTaskManager()
+	taskManager.CmdOptions = cmdOptions
+	taskManager.MainThreadExitChan = mainThreadExitChan
 }
+
 
 func main() {
 	printVersion()
 	defer glog.Flush()
-
-	if options.pprof {
+	if cmdOptions.pprof {
 		go func() {
-			http.ListenAndServe(options.pprofAddr, nil)
+			err := http.ListenAndServe(cmdOptions.pprofAddr, nil)
+			if err != nil {
+				glog.Error(err)
+			}
 		}()
 	}
-	if options.cpuProfile != "" {
-		f, err := os.Create(options.cpuProfile)
+	if cmdOptions.cpuProfile != "" {
+		f, err := os.Create(cmdOptions.cpuProfile)
 		if err != nil {
 			glog.Fatalf("could not create CPU profile: %s", err)
 		}
@@ -125,9 +92,9 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	if options.memProfile != "" {
+	if cmdOptions.memProfile != "" {
 		defer func() {
-			f, err := os.Create(options.memProfile)
+			f, err := os.Create(cmdOptions.memProfile)
 			if err != nil {
 				glog.Fatalf("could not create memory profile: %s", err)
 			}
@@ -138,46 +105,15 @@ func main() {
 			}
 		}()
 	}
-
-	config, err := parseConfig(options.config)
-	if err != nil {
-		glog.Fatalf("could not parse config: %v", err)
+	if ruleLoadMode == common.Cmd {
+		task.LoadFromCmd()
+	} else if ruleLoadMode == common.ConfigDir {
+		task.LoadFromConfigDir()
+	} else if ruleLoadMode == common.Rpc {
+		task.LoadFromDb()
+		rpc.StartRpcServer()
 	}
-	boxes, err := buildPluginLink(config)
-	if err != nil {
-		glog.Fatalf("build plugin link error: %v", err)
-	}
-	inputs = boxes
-	go inputs.start()
-
-	go func() {
-		for cfg := range configChannel {
-			inputs.stop()
-			boxes, err := buildPluginLink(cfg)
-			if err == nil {
-				inputs = boxes
-				go inputs.start()
-			} else {
-				glog.Errorf("build plugin link error: %v", err)
-				exit()
-			}
-		}
-	}()
-
-	if options.autoReload {
-		if err := watchConfig(options.config, configChannel); err != nil {
-			glog.Fatalf("watch config fail: %s", err)
-		}
-	}
-
-	go listenSignal()
-
 	<-mainThreadExitChan
-	inputs.stop()
+	taskManager.StopAllTask()
 }
 
-var configChannel = make(chan map[string]interface{})
-
-func exit() {
-	mainThreadExitChan <- struct{}{}
-}

@@ -1,13 +1,12 @@
-package main
+package cfg
 
 import (
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
-
-	"gopkg.in/yaml.v2"
 )
 
 type YamlParser struct{}
@@ -47,6 +46,18 @@ func (yp *YamlParser) parse(filepath string) (map[string]interface{}, error) {
 
 	config := make(map[string]interface{})
 	err = yaml.Unmarshal(buffer, &config)
+	if err != nil {
+		return nil, err
+	}
+	return config, nil
+}
+
+func (yp *YamlParser) parseYpBytes(content []byte) (map[string]interface{}, error) {
+	var (
+		err    error
+	)
+	config := make(map[string]interface{})
+	err = yaml.Unmarshal(content, &config)
 	if err != nil {
 		return nil, err
 	}

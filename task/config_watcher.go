@@ -1,11 +1,11 @@
-package main
+package task
 
 import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 )
 
-// Watcher watcher初始化的时候需要读取配置并返回一次configChannel
+// watcher初始化的时候需要读取配置并返回一次configChannel
 type Watcher interface {
 	watch(filename string, configChannel chan<- map[string]interface{}) error
 }
