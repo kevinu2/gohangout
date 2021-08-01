@@ -77,3 +77,10 @@ func ToString(value interface{}) (string, error) {
     }
     return "", InValidType
 }
+
+func ConvInterfaceToInt(value interface{}) int {
+    if v, valid := value.(int); valid {
+        return v
+    }
+    return 0
+}

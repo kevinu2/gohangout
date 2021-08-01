@@ -57,6 +57,7 @@ func deleteTaskCache(runningKey string, task *HangoutTask) {
 	runningCache := taskManager.runningTaskCache
 	delete(runningCache, runningKey)
 	delete(taskManager.taskCache, task.TaskId)
+	task.stopTask()
 }
 
 func statusName(status RunningStatus) string {
@@ -102,7 +103,6 @@ func taskIsRunning(task *HangoutTask) bool {
 		}
 	}
 	if !isRunning {
-		t.inputs.Stop()
 		deleteTaskCache(runningKey, task)
 	}
 	return isRunning
@@ -284,29 +284,29 @@ func (tskManager *TskManager) parseStartTaskParam(param *StartTaskParam) *Hangou
 	cmdOptions := tskManager.CmdOptions
 	worker := cmdOptions.Worker
 	if v, ok := config["worker"]; ok {
-		worker = v.(int)
+		worker = utils.ConvInterfaceToInt(v)
 	}
 	if worker <= 0 {
 		worker = 1
 	}
 	ruleId := ""
 	if v, ok := config["id"]; ok {
-		ruleId = v.(string)
+		ruleId = utils.ConvInterfaceToStr(v)
 	}
 	ruleName := ""
 	if v, ok := config["name"]; ok {
-		ruleName = v.(string)
+		ruleName = utils.ConvInterfaceToStr(v)
 	}
     vendor := ""
 	if v, ok := config["vendor"]; ok {
-		vendor = v.(string)
+		vendor = utils.ConvInterfaceToStr(v)
 	}
 	if utils.StrIsEmpty(vendor) {
 		vendor = common.DefaultTaskVendor
 	}
 	description := ""
 	if v, ok := config["description"]; ok {
-		description = v.(string)
+		description = utils.ConvInterfaceToStr(v)
 	}
 	return &HangoutTask{
 		Config: config,
@@ -325,12 +325,33 @@ func (tskManager *TskManager) parseStartTaskParam(param *StartTaskParam) *Hangou
 	}
 }
 
+func checkRpcRequestArgs(task *HangoutTask, ruleLoadMode common.RuleLoadMode) error {
+	if ruleLoadMode != common.Rpc {
+		return nil
+	}
+	if utils.StrIsEmpty(task.RuleId) {
+	 	return errors.New("rule field 'id' can't be empty")
+	}
+	if utils.StrIsEmpty(task.RuleName) {
+		return errors.New("rule field 'name' can't be empty")
+	}
+	if utils.StrIsEmpty(task.Vendor) {
+		return errors.New("rule field 'vendor' can't be empty")
+	}
+	return nil
+}
+
 func (tskManager *TskManager) startHangoutTask(param *StartTaskParam) *TskActionResult {
 	commitResult := &TskActionResult{Success: false}
 	hangoutTask := tskManager.parseStartTaskParam(param)
 	commitResult.RuleId = hangoutTask.RuleId
 	commitResult.TaskShard = hangoutTask.TaskShard
 	commitResult.Vendor = hangoutTask.Vendor
+	err := checkRpcRequestArgs(hangoutTask, param.ruleLoadMode)
+	if err != nil {
+		commitResult.Err = err
+		return commitResult
+	}
 	commitResult.Param = param
 	commitResult.Task = hangoutTask
 	if taskIsRunning(hangoutTask) {
