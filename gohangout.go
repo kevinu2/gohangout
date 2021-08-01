@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/golang/glog"
 	"github.com/kevinu2/gohangout/cfg"
 	"github.com/kevinu2/gohangout/common"
@@ -15,24 +16,30 @@ import (
 	"strings"
 )
 
+var version = "1.7.8"
+
+func printVersion() {
+	fmt.Printf("gohangout version %s\n", version)
+}
+
 var cmdOptions = &struct {
-	config     string
-	autoReload bool // 配置文件更新自动重启
-	pprof      bool
-	pprofAddr  string
-	cpuProfile string
-	memProfile string
+	config      string
+	autoReload  bool // 配置文件更新自动重启
+	pprof       bool
+	pprofAddr   string
+	cpuProfile  string
+	memProfile  string
 	exitWhenNil bool
 	minLogLevel int
-	worker     int
-	taskShard  string
+	worker      int
+	taskShard   string
 }{}
 
 var (
 	mainThreadExitChan = make(chan struct{}, 0)
-	ruleLoadMode  common.RuleLoadMode
-	appConfig    *cfg.AppConfig
-	taskManager *task.TskManager
+	ruleLoadMode       common.RuleLoadMode
+	appConfig          *cfg.AppConfig
+	taskManager        *task.TskManager
 )
 
 func init() {
@@ -58,17 +65,16 @@ func init() {
 		ruleLoadMode = common.Cmd
 	}
 	cmdOptions := task.CmdOptions{
-		AutoReload: cmdOptions.autoReload,
-		ExitWhenNil: cmdOptions.exitWhenNil,
-		Worker: cmdOptions.worker,
+		AutoReload:     cmdOptions.autoReload,
+		ExitWhenNil:    cmdOptions.exitWhenNil,
+		Worker:         cmdOptions.worker,
 		ConfigFilePath: cmdOptions.config,
-		TaskShard: strings.Join([]string{taskShardPrefix, cmdOptions.taskShard}, ""),
+		TaskShard:      strings.Join([]string{taskShardPrefix, cmdOptions.taskShard}, ""),
 	}
 	taskManager = task.GetTaskManager()
 	taskManager.CmdOptions = cmdOptions
 	taskManager.MainThreadExitChan = mainThreadExitChan
 }
-
 
 func main() {
 	printVersion()
@@ -117,4 +123,3 @@ func main() {
 	taskManager.StopAllTask()
 	rpc.StopRpcServer()
 }
-
