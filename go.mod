@@ -13,7 +13,7 @@ require (
 	github.com/ipipdotnet/datx-go v0.0.0-20180617151335-0ac818a639c3
 	github.com/ipipdotnet/ipdb-go v1.3.0
 	github.com/jinzhu/gorm v1.9.16
-	github.com/json-iterator/go v1.1.10
+	github.com/json-iterator/go v1.1.11
 	github.com/kevinu2/shm v0.0.0-20210727044400-2e45fef07453
 	github.com/magiconair/properties v1.8.1
 	github.com/oliveagle/jsonpath v0.0.0-20180606110733-2e52cf6e6852
@@ -21,6 +21,10 @@ require (
 	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
 	github.com/smallnest/rpcx v1.6.5
 	github.com/spf13/viper v1.6.3
+	go.etcd.io/etcd/client/v3 v3.5.0
+	google.golang.org/grpc v1.38.0
 	google.golang.org/grpc/examples v0.0.0-20210730002332-ea9b7a0a7651 // indirect
+	google.golang.org/protobuf v1.26.0
+	gopkg.in/ini.v1 v1.51.0
 	gopkg.in/yaml.v2 v2.3.0
 )
