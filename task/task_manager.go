@@ -255,7 +255,7 @@ func saveOrUpdateToDb(param *StartTaskParam, hangoutTask *HangoutTask) error {
 
 func failRetrySaveToDb(param *StartTaskParam, hangoutTask *HangoutTask) {
 	//重试
-	maxRetryTimes := 3
+	maxRetryTimes := 6
 	for i := 0; i < maxRetryTimes; i++ {
 		glog.Infof("try to save task info with id=%s to db...", hangoutTask.TaskId)
 		err := saveOrUpdateToDb(param, hangoutTask)
@@ -264,7 +264,7 @@ func failRetrySaveToDb(param *StartTaskParam, hangoutTask *HangoutTask) {
 		} else {
 			break
 		}
-		time.Sleep(time.Second * 10)
+		time.Sleep(time.Second * 5)
 	}
 }
 
