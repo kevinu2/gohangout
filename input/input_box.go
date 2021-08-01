@@ -142,8 +142,9 @@ func (box *InputBox) shutdown() {
 			}
 		}
 	})
-
-	box.shutdownChan <- true
+	if len(box.shutdownChan) == 0 {
+		box.shutdownChan <- true
+	}
 }
 
 func (box *InputBox) Shutdown() {

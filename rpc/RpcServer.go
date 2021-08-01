@@ -9,7 +9,7 @@ import (
 func StartRpcServer() {
     config := cfg.GetAppConfig().RpcConfig
     s := server.NewServer()
-    err := s.Register(new(EtlRule), "")
+    err := s.Register(new(EtlTask), "")
     if err != nil {
         glog.Fatal(err)
     }
