@@ -71,7 +71,6 @@ func handleResponseResult(reply *SingleReply, actionResult *task.TskActionResult
     reply.TaskShard = actionResult.TaskShard
     if actionResult.Success {
         reply.Status = SUCCESS
-        return nil
     }
     if actionResult.Err != nil {
         glog.Error(actionResult.Err)

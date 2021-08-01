@@ -253,16 +253,32 @@ func saveOrUpdateToDb(param *StartTaskParam, hangoutTask *HangoutTask) error {
 	return taskDbService.saveOrUpdateTask(ruleTask)
 }
 
+func failRetrySaveToDb(param *StartTaskParam, hangoutTask *HangoutTask) {
+	//重试2分钟
+	maxRetryTimes := 12
+	for i := 0; i < maxRetryTimes; i++ {
+		glog.Infof("try to save task info with id=%s to db...", hangoutTask.TaskId)
+		err := saveOrUpdateToDb(param, hangoutTask)
+		if err != nil {
+			glog.Error(err)
+		} else {
+			break
+		}
+		time.Sleep(time.Second * 10)
+	}
+}
+
 func handleRpcCommit(commitResult *TskActionResult, param *StartTaskParam, hangoutTask *HangoutTask) {
 	err := saveOrUpdateToDb(param, hangoutTask)
 	if err == nil {
 		addToTaskCache(hangoutTask)
 		return
 	}
-	commitResult.Success = false
-	commitResult.Err = err
-	hangoutTask.stopTask()
-	hangoutTask.TaskStatus = Stopped
+	commitResult.Success = true
+	//commitResult.Err = err
+	go failRetrySaveToDb(param, hangoutTask)
+	//hangoutTask.stopTask()
+	//hangoutTask.TaskStatus = Stopped
 }
 
 func handleCommitResult(commitResult *TskActionResult, isInitLoad bool)  {
