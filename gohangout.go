@@ -8,6 +8,7 @@ import (
 	"github.com/kevinu2/gohangout/common"
 	"github.com/kevinu2/gohangout/rpc"
 	"github.com/kevinu2/gohangout/task"
+	"github.com/kevinu2/gohangout/utils"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -54,12 +55,14 @@ func init() {
 	flag.StringVar(&cmdOptions.taskShard, "task-shard", "0", "task running shard index")
 
 	flag.Parse()
-	cfg.InitAppConfig()
-	appConfig = cfg.GetAppConfig()
 	taskShardPrefix := ""
-	if appConfig != nil {
-		ruleLoadMode = appConfig.RuleLoadMode
-		taskShardPrefix = appConfig.TaskShardPrefix
+	if utils.StrIsEmpty(cmdOptions.config) {
+		cfg.InitAppConfig()
+		appConfig = cfg.GetAppConfig()
+		if appConfig != nil {
+			ruleLoadMode = appConfig.RuleLoadMode
+			taskShardPrefix = appConfig.TaskShardPrefix
+		}
 	}
 	if ruleLoadMode == "" {
 		ruleLoadMode = common.Cmd
