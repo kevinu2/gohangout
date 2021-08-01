@@ -8,7 +8,9 @@ import (
 	"github.com/kevinu2/gohangout/codec"
 	pb "github.com/kevinu2/gohangout/dataProcess/go2py/interactive"
 	"github.com/kevinu2/gohangout/topology"
+	"google.golang.org/grpc"
 	"log"
+	"net"
 	"os"
 	"time"
 )
@@ -40,6 +42,22 @@ func (s *grpcServer) OnProcessResult(ctx context.Context, in *pb.DataRequest) (*
 	//todo this will be call other outer
 
 	return &dr, nil
+}
+
+func runGoServer(port string) error {
+	//port = ":50051"
+	lis, err := net.Listen("tcp", port)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	s := grpc.NewServer()
+	pb.RegisterProcessDataServer(s, &grpcServer{})
+	log.Printf("server listening at %v", lis.Addr())
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+
+	return err
 }
 
 type GRPCInput struct {
