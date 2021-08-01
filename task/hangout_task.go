@@ -60,7 +60,7 @@ const (
 	Stopped RunningStatus = 0
 )
 
-func (hangoutTask *HangoutTask) exit() {
+func (hangoutTask *HangoutTask) Exit() {
 	hangoutTask.MainThreadExitChan <- struct{}{}
 }
 
@@ -129,7 +129,7 @@ func (hangoutTask *HangoutTask) startInputs()  {
 				go inputs.start(hangoutTask.Worker)
 			} else {
 				glog.Errorf("build plugin link error: %v", err)
-				hangoutTask.exit()
+				hangoutTask.Exit()
 			}
 		}
 	}()
@@ -138,7 +138,7 @@ func (hangoutTask *HangoutTask) startInputs()  {
 			glog.Fatalf("watch config fail: %s", err)
 		}
 	}
-	go listenSignal(inputs, configChannel)
+	go listenSignal(inputs, configChannel, hangoutTask)
 }
 
 func (hangoutTask *HangoutTask) startTask(param *StartTaskParam)  {

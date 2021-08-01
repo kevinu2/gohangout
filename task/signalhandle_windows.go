@@ -9,7 +9,7 @@ import (
 	"syscall"
 )
 
-func listenSignal(inputs GoHangoutInputs, configChannel chan map[string]interface{}) {
+func listenSignal(inputs GoHangoutInputs, configChannel chan map[string]interface{}, hangoutTask *HangoutTask) {
 	c := make(chan os.Signal, 1)
 	var stop bool
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)

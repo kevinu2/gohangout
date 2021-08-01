@@ -115,5 +115,6 @@ func main() {
 	}
 	<-mainThreadExitChan
 	taskManager.StopAllTask()
+	rpc.StopRpcServer()
 }
 
