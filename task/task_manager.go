@@ -333,7 +333,7 @@ func (tskManager *TskManager) parseStartTaskParam(param *StartTaskParam) *Hangou
 	if v, ok := config["description"]; ok {
 		description = utils.ConvInterfaceToStr(v)
 	}
-	return &HangoutTask{
+	task := &HangoutTask{
 		Config: config,
 		Worker: worker,
 		ExitWhenNil: cmdOptions.ExitWhenNil,
@@ -346,8 +346,11 @@ func (tskManager *TskManager) parseStartTaskParam(param *StartTaskParam) *Hangou
 		Vendor: vendor,
 		Description: description,
 		TaskStatus: Stopped,
-		Base64Config: *param.base64Config,
 	}
+    if param.base64Config != nil {
+    	task.Base64Config =  *param.base64Config
+	}
+	return task
 }
 
 func checkRpcRequestArgs(task *HangoutTask, ruleLoadMode common.RuleLoadMode) error {

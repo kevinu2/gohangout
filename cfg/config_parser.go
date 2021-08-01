@@ -29,7 +29,7 @@ func ParseBytesConfig(content []byte) (map[string]interface{}, error) {
 }
 
 // remove sensitive info before output
-func removeSensitiveInfo(config map[string]interface{}) string {
+func RemoveSensitiveInfo(config map[string]interface{}) string {
 	re := regexp.MustCompile(`(.*password:\s+)(.*)`)
 	re2 := regexp.MustCompile(`(http(s)?://\w+:)\w+`)
 
