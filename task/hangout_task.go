@@ -12,7 +12,7 @@ import (
 
 type GoHangoutInputs []*input.InputBox
 
-type TskCommitResult struct {
+type TskActionResult struct {
 	LoadMode common.RuleLoadMode
 	TaskId   string
 	Success   bool
@@ -23,6 +23,8 @@ type TskCommitResult struct {
 	Task *HangoutTask
 	Param *StartTaskParam
 }
+
+type RunningStatus int16
 
 type HangoutTask struct {
 	Config map[string]interface{}
@@ -35,7 +37,9 @@ type HangoutTask struct {
 	configChannel chan map[string]interface{}
 	AutoReload bool
 	FileName string
+	Base64Config string
 	TaskShard string
+	TaskStatus RunningStatus
 	Vendor string
 	Description string
 	MainThreadExitChan chan struct{}
@@ -45,10 +49,16 @@ type StartTaskParam struct {
 	base64Config *string
 	config map[string]interface{}
 	fileName string
-	commitChan chan TskCommitResult
+	commitChan chan TskActionResult
 	ruleLoadMode common.RuleLoadMode
+	StartInstant bool
+	CurrentHangoutTask *HangoutTask
 }
 
+const (
+	Running RunningStatus = 1
+	Stopped RunningStatus = 0
+)
 
 func (hangoutTask *HangoutTask) exit() {
 	hangoutTask.MainThreadExitChan <- struct{}{}
@@ -106,23 +116,10 @@ func (inputs GoHangoutInputs) Stop() {
 	}
 }
 
-func (hangoutTask *HangoutTask) startTask(param *StartTaskParam)  {
-	configChannel := make(chan map[string]interface{})
-    hangoutTask.configChannel = configChannel
-	commitResult := TskCommitResult{Success: false}
-	commitChan := param.commitChan
-	defer func() {
-		commitChan <- commitResult
-	}()
-	boxes, err := buildPluginLink(hangoutTask.Config, hangoutTask.ExitWhenNil, hangoutTask.MainThreadExitChan)
-	if err != nil {
-		glog.Errorf("build plugin link error: %v", err)
-		commitResult.Err = err
-		return
-	}
-	inputs := GoHangoutInputs(boxes)
-	hangoutTask.inputs = inputs
+func (hangoutTask *HangoutTask) startInputs()  {
+	inputs := hangoutTask.inputs
 	go inputs.start(hangoutTask.Worker)
+	configChannel := hangoutTask.configChannel
 	go func() {
 		for cfg := range configChannel {
 			inputs.Stop()
@@ -142,12 +139,36 @@ func (hangoutTask *HangoutTask) startTask(param *StartTaskParam)  {
 		}
 	}
 	go listenSignal(inputs, configChannel)
+}
+
+func (hangoutTask *HangoutTask) startTask(param *StartTaskParam)  {
+	configChannel := make(chan map[string]interface{})
+    hangoutTask.configChannel = configChannel
+	commitResult := TskActionResult{Success: false}
+	commitChan := param.commitChan
+	defer func() {
+		commitChan <- commitResult
+	}()
+	boxes, err := buildPluginLink(hangoutTask.Config, hangoutTask.ExitWhenNil, hangoutTask.MainThreadExitChan)
+	if err != nil {
+		glog.Errorf("build plugin link error: %v", err)
+		commitResult.Err = err
+		return
+	}
+	inputs := GoHangoutInputs(boxes)
+	hangoutTask.inputs = inputs
+	if param.StartInstant {
+		hangoutTask.startInputs()
+		hangoutTask.TaskStatus = Running
+	} else {
+		hangoutTask.TaskStatus = Stopped
+	}
 	commitResult.Success = true
 }
 
 func (hangoutTask *HangoutTask) stopTask() {
 	if hangoutTask.inputs != nil {
-		glog.Infof("stop task with rule_id=%s,rule_name=%s", hangoutTask.RuleId, hangoutTask.RuleName)
+		glog.Infof("stop task with task_id=%s,rule_name=%s", hangoutTask.TaskId, hangoutTask.RuleName)
 		hangoutTask.inputs.Stop()
 	}
 }

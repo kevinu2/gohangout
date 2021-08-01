@@ -14,28 +14,11 @@ const (
     DefaultTaskVendor = "hangout"
 )
 
-type UploadArgs struct {
-    //base64编码
-    Content string
-}
-
-type StopArgs struct {
-    TaskId string
-}
-
-type ResponseCode string
-const (
-   SUCCESS ResponseCode = "0"
-   FAIL    ResponseCode = "1"
-)
-
 type RuleLoadMode string
 const (
     Cmd  RuleLoadMode = "CMD"
     ConfigDir RuleLoadMode = "CONFIG_DIR"
     Rpc RuleLoadMode = "RPC"
-    Db RuleLoadMode = "DB"
-    Empty RuleLoadMode = ""
 )
 
 var (
