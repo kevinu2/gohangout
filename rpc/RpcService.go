@@ -4,6 +4,7 @@ import (
     "context"
     "github.com/golang/glog"
     "github.com/kevinu2/gohangout/task"
+    "github.com/kevinu2/gohangout/utils"
 )
 
 var (
@@ -52,8 +53,14 @@ type Reply struct {
     Errors []*ErrorItem
 }
 
+type TaskItem struct {
+    TaskId string
+    Vendor string
+    RuleId string
+}
+
 type Args struct {
-    TaskIds[] string
+    TaskItems []TaskItem
 }
 
 func handleResponseResult(reply *SingleReply, actionResult *task.TskActionResult) error {
@@ -82,9 +89,26 @@ func createErrorItem(reply *SingleReply) *ErrorItem {
     return item
 }
 
+func getTaskIds(args *Args) []string {
+    taskIds := make([]string, 0)
+    taskItems := args.TaskItems
+    if len(taskItems) == 0 {
+        return taskIds
+    }
+    for _, item := range taskItems {
+        if !utils.StrIsEmpty(item.TaskId) {
+            taskIds = append(taskIds, item.TaskId)
+        } else {
+            taskId := task.GetTaskId(item.Vendor, item.RuleId)
+            taskIds = append(taskIds, taskId)
+        }
+    }
+    return taskIds
+}
+
 func executeRpcAction(args *Args, reply *Reply, action RequestAction) error {
     reply.Status = SUCCESS
-    taskIds := args.TaskIds
+    taskIds := getTaskIds(args)
     replyErrors := make([]*ErrorItem, 0)
     if len(taskIds) == 0 {
         reply.Errors = replyErrors

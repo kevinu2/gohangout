@@ -41,11 +41,12 @@ var (
 )
 
 
+func GetRunningKey(vendor string, ruleId string) string {
+	return strings.Join([]string{vendor,ruleId}, ":")
+}
+
 func getRunningKey(task *HangoutTask) string {
-	ruleId := task.RuleId
-	vendor := task.Vendor
-	taskShard := task.TaskShard
-	return strings.Join([]string{vendor,ruleId,taskShard}, ":")
+	return GetRunningKey(task.Vendor, task.RuleId)
 }
 
 func deleteTaskCache(runningKey string, task *HangoutTask) {
@@ -65,6 +66,14 @@ func statusName(status RunningStatus) string {
 		return "running"
 	}
 	return "Stopped"
+}
+
+func GetTaskId(vendor string, ruleId string) string {
+	key := GetRunningKey(vendor, ruleId)
+	if v, exist := taskManager.runningTaskCache[key];exist {
+	   return v.TaskId
+	}
+	return ""
 }
 
 func addToTaskCache(task *HangoutTask) {
@@ -152,7 +161,7 @@ func (tskManager *TskManager) StartOrKillRpcTask(args *TskRpcRequest, kill bool)
 	if kill {
 		task.stopTask()
 	} else {
-		commitResult := tskManager.restartRpcTask(task)
+		commitResult := tskManager.restartRpcTask(task, true)
 		handleCommitResult(commitResult, false)
 	}
 	return actionResult
@@ -182,12 +191,12 @@ func (tskManager *TskManager) DeleteRpcTask(args *TskRpcRequest) *TskActionResul
 }
 
 
-func (tskManager *TskManager) restartRpcTask(task *HangoutTask) *TskActionResult {
+func (tskManager *TskManager) restartRpcTask(task *HangoutTask, startInstant bool) *TskActionResult {
 	param := &StartTaskParam{
 		config: task.Config,
 		commitChan: make(chan TskActionResult),
 		ruleLoadMode: common.Rpc,
-		StartInstant: false,
+		StartInstant: startInstant,
 		base64Config: &task.Base64Config,
 	}
 	return taskManager.startHangoutTask(param)
