@@ -20,6 +20,9 @@ require (
 	github.com/oliveagle/jsonpath v0.0.0-20180606110733-2e52cf6e6852
 	github.com/panjf2000/ants/v2 v2.4.6
 	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
+	github.com/rpcxio/libkv v0.5.1-0.20210420120011-1fceaedca8a5
+	github.com/rpcxio/rpcx-etcd v0.0.0-20210606082724-1a5593db7a0d
+	github.com/rs/xid v1.3.0
 	github.com/smallnest/rpcx v1.6.5
 	github.com/spf13/viper v1.6.3
 	golang.org/x/sys v0.0.0-20210603081109-ebe580a85c40 // indirect

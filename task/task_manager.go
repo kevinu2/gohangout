@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/kevinu2/gohangout/cfg"
 	"github.com/kevinu2/gohangout/common"
-	"github.com/kevinu2/gohangout/db"
 	"github.com/kevinu2/gohangout/utils"
+	"github.com/rs/xid"
 	"strings"
 	"sync"
 	"time"
@@ -26,13 +26,12 @@ type TskManager struct {
 	MainThreadExitChan chan struct{}
 	CmdOptions CmdOptions
 	taskCache  map[string]*HangoutTask
-	runningTaskCache map[string]*HangoutTask
+	TaskInstanceId string
 	sync.Mutex
 }
 
 type TskRpcRequest struct {
 	UploadContent string
-    TaskId string
 }
 
 var (
@@ -49,72 +48,34 @@ func getRunningKey(task *HangoutTask) string {
 	return GetRunningKey(task.Vendor, task.RuleId)
 }
 
-func deleteTaskCache(runningKey string, task *HangoutTask) {
+func deleteTaskCache(task *HangoutTask) {
 	taskManager.Lock()
 	defer taskManager.Unlock()
-	if runningKey == "" {
-		runningKey = getRunningKey(task)
-	}
-	runningCache := taskManager.runningTaskCache
-	delete(runningCache, runningKey)
 	delete(taskManager.taskCache, task.TaskId)
 	task.stopTask()
 }
 
-func statusName(status RunningStatus) string {
-	if status == Running {
-		return "running"
-	}
-	return "Stopped"
-}
-
-func GetTaskId(vendor string, ruleId string) string {
-	key := GetRunningKey(vendor, ruleId)
-	if v, exist := taskManager.runningTaskCache[key];exist {
-	   return v.TaskId
-	}
-	return ""
-}
-
-func addToTaskCache(task *HangoutTask) {
+func readOneTaskFromCache() *HangoutTask {
 	taskManager.Lock()
 	defer taskManager.Unlock()
-	taskManager.taskCache[task.TaskId] = task
-	runningKey := getRunningKey(task)
-	taskManager.runningTaskCache[runningKey] = task
-	glog.Infof("add task to cache with task-id =%s,running-key=%s,status=%s", task.TaskId, runningKey, statusName(task.TaskStatus))
-}
-
-func readTaskFrmCache(taskId string) *HangoutTask {
-	taskManager.Lock()
-	defer taskManager.Unlock()
-	task, exists := taskManager.taskCache[taskId]
+	exists := len(taskManager.taskCache) > 0
 	if !exists {
-		glog.Infof("task with id = %s not exists", taskId)
+		glog.Infof("not found running task")
 		return nil
+	}
+	var task *HangoutTask
+	for _, v := range taskManager.taskCache {
+		task = v
+		break
 	}
 	return task
 }
 
 func taskIsRunning(task *HangoutTask) bool {
-	runningKey := getRunningKey(task)
-	runningCache := taskManager.runningTaskCache
-	t, exist := runningCache[runningKey]
-	if !exist {
+	if task == nil {
 		return false
 	}
-	task.TaskId = t.TaskId
-	isRunning := true
-	for _, box := range t.inputs {
-		if box.IsStop() {
-		    isRunning = false
-		    break
-		}
-	}
-	if !isRunning {
-		deleteTaskCache(runningKey, task)
-	}
-	return isRunning
+	return task.TaskStatus == Starting
 }
 
 func parseBase64RuleCfg(ruleContent *string) (map[string]interface{}, error) {
@@ -127,109 +88,30 @@ func parseBase64RuleCfg(ruleContent *string) (map[string]interface{}, error) {
 	return cfg.ParseBytesConfig(bytes)
 }
 
-func (tskManager *TskManager) UploadRpcTask(args *TskRpcRequest) *TskActionResult {
-	 commitResult :=  tskManager.StartHangoutTask(&args.UploadContent, common.Rpc, true)
-	 handleCommitResult(commitResult, false)
-	 return commitResult
-}
-
-func (tskManager *TskManager) StartOrKillRpcTask(args *TskRpcRequest, kill bool) *TskActionResult {
-	taskId := args.TaskId
-	actionResult := &TskActionResult{
-		Success: true,
-		TaskId: taskId,
-	}
-	updatedStatus := Stopped
-	if !kill {
-		updatedStatus = Running
-	}
-	task := readTaskFrmCache(taskId)
-	if task == nil {
-		return actionResult
-	}
-	//更新数据库失败
-	err := taskDbService.updateTaskStatus(taskId, int16(updatedStatus))
-	if err != nil {
-		actionResult.Err = err
-		actionResult.Success = false
-		return actionResult
-	}
-	task.TaskStatus = updatedStatus
-	actionResult.RuleId = task.RuleId
-	actionResult.Vendor = task.Vendor
-	actionResult.TaskShard = task.TaskShard
-	if kill {
-		task.stopTask()
-	} else {
-		commitResult := tskManager.restartRpcTask(task, true)
-		handleCommitResult(commitResult, false)
-	}
-	return actionResult
-}
-
-func (tskManager *TskManager) DeleteRpcTask(args *TskRpcRequest) *TskActionResult {
-	taskId := args.TaskId
-	actionResult := &TskActionResult{
-		Success: true,
-		TaskId: taskId,
-	}
-	task := readTaskFrmCache(taskId)
-	if task == nil {
-		return actionResult
-	}
-	err := taskDbService.deleteTaskById(taskId)
-	if err != nil {
-		actionResult.Err = err
-		actionResult.Success = false
-		return actionResult
-	}
-	actionResult.RuleId = task.RuleId
-	actionResult.Vendor = task.Vendor
-	actionResult.TaskShard = task.TaskShard
-	deleteTaskCache("", task)
-	return actionResult
-}
-
-
-func (tskManager *TskManager) restartRpcTask(task *HangoutTask, startInstant bool) *TskActionResult {
-	param := &StartTaskParam{
-		config: task.Config,
-		commitChan: make(chan TskActionResult),
-		ruleLoadMode: common.Rpc,
-		StartInstant: startInstant,
-		base64Config: &task.Base64Config,
-	}
-	return taskManager.startHangoutTask(param)
-}
-
-func (tskManager *TskManager) StartHangoutTask(config *string, loadMode common.RuleLoadMode, startInstant bool) *TskActionResult {
-    var ruleCfg map[string]interface{}
-    var fileName string
-    var base64Config *string
-	commitResult := &TskActionResult{Success: false}
+func GenerateStartParam(config *string, loadMode common.RuleLoadMode, startInstant bool) (*TskStartParam, error) {
+	var ruleCfg map[string]interface{}
+	var fileName string
+	var base64Config *string
 	if utils.StrIsEmpty(*config) {
-		commitResult.Err = errors.New("rule content is empty")
-		return commitResult
+		return nil, errors.New("rule content is empty")
 	}
 	if loadMode == common.Rpc {
-	    rpcCfg, err := parseBase64RuleCfg(config)
-	    if err != nil {
-		    commitResult.Err = err
-		    return commitResult
-	    }
-	    ruleCfg = rpcCfg
-	    base64Config = config
-    } else {
-	    fileCfg, err := cfg.ParseConfig(*config)
-	    if err != nil {
-		    glog.Errorf("could not parse config: %v", err)
-		    commitResult.Err = err
-		    return commitResult
-	    }
-	    ruleCfg = fileCfg
-	    fileName = *config
-    }
-	param := &StartTaskParam{
+		rpcCfg, err := parseBase64RuleCfg(config)
+		if err != nil {
+			return nil, err
+		}
+		ruleCfg = rpcCfg
+		base64Config = config
+	} else {
+		fileCfg, err := cfg.ParseConfig(*config)
+		if err != nil {
+			glog.Errorf("could not parse config: %v", err)
+			return nil, err
+		}
+		ruleCfg = fileCfg
+		fileName = *config
+	}
+	param := &TskStartParam{
 		config: ruleCfg,
 		fileName: fileName,
 		commitChan: make(chan TskActionResult),
@@ -237,79 +119,34 @@ func (tskManager *TskManager) StartHangoutTask(config *string, loadMode common.R
 		base64Config: base64Config,
 		StartInstant: startInstant,
 	}
-	return taskManager.startHangoutTask(param)
+	return param, nil
 }
 
-func saveOrUpdateToDb(param *StartTaskParam, hangoutTask *HangoutTask) error {
-	ruleTask := new(RuleTask)
-	ruleTask.Id = hangoutTask.TaskId
-	ruleTask.RuleContent = *param.base64Config
-	ruleTask.RuleId = hangoutTask.RuleId
-	ruleTask.RuleName = hangoutTask.RuleName
-	ruleTask.Shard = hangoutTask.TaskShard
-	ruleTask.Vendor = hangoutTask.Vendor
-	ruleTask.Status = int16(hangoutTask.TaskStatus)
-	ruleTask.Description = hangoutTask.Description
-	return taskDbService.saveOrUpdateTask(ruleTask)
+func handleCommitResult(commitResult *TskActionResult, task *HangoutTask)  {
+	taskManager.Lock()
+	defer taskManager.Unlock()
+	for k := range taskManager.taskCache {
+		delete(taskManager.taskCache, k)
+	}
+	if utils.StrIsEmpty(task.TaskId) {
+		task.TaskId = uuid.New().String()
+		commitResult.TaskId = task.TaskId
+	}
+	taskManager.taskCache[task.TaskId] = task
+	runningKey := getRunningKey(task)
+	glog.Infof("add task to cache with task-id =%s,running-key=%s", task.TaskId, runningKey)
 }
 
-func failRetrySaveToDb(param *StartTaskParam, hangoutTask *HangoutTask) {
-	//重试
-	maxRetryTimes := 6
-	for i := 0; i < maxRetryTimes; i++ {
-		glog.Infof("try to save task info with id=%s to db...", hangoutTask.TaskId)
-		err := saveOrUpdateToDb(param, hangoutTask)
-		if err != nil {
-			glog.Error(err)
-		} else {
-			break
-		}
-		time.Sleep(time.Second * 5)
-	}
-}
-
-func handleRpcCommit(commitResult *TskActionResult, param *StartTaskParam, hangoutTask *HangoutTask) {
-	err := saveOrUpdateToDb(param, hangoutTask)
-	if err == nil {
-		addToTaskCache(hangoutTask)
-		return
-	}
-	commitResult.Success = true
-	//commitResult.Err = err
-	go failRetrySaveToDb(param, hangoutTask)
-	//hangoutTask.stopTask()
-	//hangoutTask.TaskStatus = Stopped
-}
-
-func handleCommitResult(commitResult *TskActionResult, isInitLoad bool)  {
-	param := commitResult.Param
-	hangoutTask := commitResult.Task
-	if param == nil || hangoutTask == nil {
-		return
-	}
-	if !commitResult.Success {
-		hangoutTask.stopTask()
-		hangoutTask.TaskStatus = Stopped
-		return
-	}
-	if utils.StrIsEmpty(hangoutTask.TaskId) {
-		hangoutTask.TaskId = uuid.New().String()
-		commitResult.TaskId = hangoutTask.TaskId
-	}
-	if param.ruleLoadMode == common.Rpc && !isInitLoad {
-		handleRpcCommit(commitResult, param, hangoutTask)
-		return
-	}
-	addToTaskCache(hangoutTask)
-}
-
-func (tskManager *TskManager) parseStartTaskParam(param *StartTaskParam) *HangoutTask {
+func GenerateHangoutTask(param *TskStartParam, tskManager *TskManager) (*HangoutTask,error) {
 	config := param.config
 	fileName := param.fileName
 	cmdOptions := tskManager.CmdOptions
 	worker := cmdOptions.Worker
 	if v, ok := config["worker"]; ok {
-		worker = utils.ConvInterfaceToInt(v)
+		configWorker := utils.ConvInterfaceToInt(v)
+		if configWorker > 0 {
+			worker = configWorker
+		}
 	}
 	if worker <= 0 {
 		worker = 1
@@ -342,15 +179,19 @@ func (tskManager *TskManager) parseStartTaskParam(param *StartTaskParam) *Hangou
 		MainThreadExitChan: tskManager.MainThreadExitChan,
 		RuleId: ruleId,
 		RuleName: ruleName,
-		TaskShard: cmdOptions.TaskShard,
 		Vendor: vendor,
 		Description: description,
-		TaskStatus: Stopped,
+		TaskStatus: Unupload,
 	}
+	task.CreateTime = time.Now().Format( "2006-01-02 15:04:05.000")
     if param.base64Config != nil {
     	task.Base64Config =  *param.base64Config
 	}
-	return task
+	//err := checkRpcRequestArgs(task, param.ruleLoadMode)
+	//if err != nil {
+	//	return nil, err
+	//}
+	return task, nil
 }
 
 func checkRpcRequestArgs(task *HangoutTask, ruleLoadMode common.RuleLoadMode) error {
@@ -369,27 +210,10 @@ func checkRpcRequestArgs(task *HangoutTask, ruleLoadMode common.RuleLoadMode) er
 	return nil
 }
 
-func (tskManager *TskManager) startHangoutTask(param *StartTaskParam) *TskActionResult {
+func (tskManager *TskManager) startHangoutTask(param *TskStartParam, hangoutTask *HangoutTask) *TskActionResult {
 	commitResult := &TskActionResult{Success: false}
-	hangoutTask := tskManager.parseStartTaskParam(param)
 	commitResult.RuleId = hangoutTask.RuleId
-	commitResult.TaskShard = hangoutTask.TaskShard
 	commitResult.Vendor = hangoutTask.Vendor
-	err := checkRpcRequestArgs(hangoutTask, param.ruleLoadMode)
-	if err != nil {
-		commitResult.Err = err
-		return commitResult
-	}
-	commitResult.Param = param
-	commitResult.Task = hangoutTask
-	if taskIsRunning(hangoutTask) {
-		commitResult.TaskId = hangoutTask.TaskId
-		oldTask := readTaskFrmCache(hangoutTask.TaskId)
-		if oldTask != nil {
-			oldTask.inputs.Stop()
-		}
-		glog.Infof("task with task id=%s has been running, will rebuild it", hangoutTask.TaskId)
-	}
 	go hangoutTask.startTask(param)
 	select {
 	case result := <- param.commitChan:
@@ -401,38 +225,16 @@ func (tskManager *TskManager) startHangoutTask(param *StartTaskParam) *TskAction
 	return commitResult
 }
 
-func loadFromDb () {
-	shard := taskManager.CmdOptions.TaskShard
-	if !utils.StrIsEmpty(shard) {
-		err, tasks := taskDbService.queryTaskByShard(shard)
-		if err != nil {
-			glog.Error(err)
-		}
-		if len(tasks) == 0 {
-		    return
-		}
-        for _, task := range tasks {
-        	ruleContent := task.RuleContent
-        	startInstant := true
-        	if task.Status == int16(Stopped) {
-				startInstant = false
-			}
-			commitResult := taskManager.StartHangoutTask(&ruleContent, common.Rpc, startInstant)
-			hangoutTask := commitResult.Task
-	        hangoutTask.TaskId = task.Id
-	        hangoutTask.RuleId = task.RuleId
-	        hangoutTask.TaskShard = task.Shard
-	        hangoutTask.Vendor = task.Vendor
-	        hangoutTask.TaskStatus = RunningStatus(task.Status)
-	        handleCommitResult(commitResult, true)
-        }
-	}
-}
-
 func LoadFromCmd() {
 	cmdOptions := taskManager.CmdOptions
-	commitResult := taskManager.StartHangoutTask(&cmdOptions.ConfigFilePath, common.Cmd, true)
-	handleCommitResult(commitResult, true)
+	param, err := GenerateStartParam(&cmdOptions.ConfigFilePath, common.Cmd, true)
+	if err != nil {
+		glog.Error(err)
+		return
+	}
+	hangoutTask, _ := GenerateHangoutTask(param, taskManager)
+	commitResult := taskManager.startHangoutTask(param, hangoutTask)
+	handleCommitResult(commitResult, hangoutTask)
 }
 
 func LoadFromConfigDir() {
@@ -441,22 +243,21 @@ func LoadFromConfigDir() {
 		glog.Warning("could not find valid rule file at the dir config/rules")
 	}
 	for _, file := range ruleFiles {
-		commitResult := taskManager.StartHangoutTask(&file, common.ConfigDir, true)
-		handleCommitResult(commitResult, true)
+		param, err := GenerateStartParam(&file, common.ConfigDir, true)
+		if err != nil {
+			glog.Error(err)
+			continue
+		}
+		hangoutTask, _ := GenerateHangoutTask(param, taskManager)
+		commitResult := taskManager.startHangoutTask(param, hangoutTask)
+		handleCommitResult(commitResult, hangoutTask)
 	}
-}
-
-func LoadFromDb()  {
-	db.InitDb()
-	CreateRuleTaskTable()
-	loadFromDb()
 }
 
 func GetTaskManager() *TskManager {
 	once.Do(func() {
 		taskManager = new(TskManager)
 		taskManager.taskCache = make(map[string]*HangoutTask, 0)
-		taskManager.runningTaskCache = make(map[string]*HangoutTask, 0)
 	})
 	return taskManager
 }
@@ -468,3 +269,23 @@ func (tskManager *TskManager) StopAllTask()  {
 		}
 	}
 }
+
+func RegisterToEtcd() {
+	rpcCfg := cfg.GetAppConfig().RpcConfig
+	etcdAddr := rpcCfg.EtcdAddr
+	if len(etcdAddr) == 0{
+		glog.Fatal("etcd cluster address is empty")
+	}
+	port := rpcCfg.Port
+	if port <= 0 {
+		glog.Fatalf("rpc port=%d is invalid", port)
+	}
+	createEtcdClient(etcdAddr)
+	uid := xid.New().String()
+	registerRpcServiceToEtc(rpcCfg.RegistryPrefix, port, uid)
+	configEtcdPrefix := rpcCfg.ConfigPrefix
+	instancePrefix := configEtcdPrefix + ".instance"
+	taskManager.TaskInstanceId = instancePrefix + "." + uid
+	glog.Infof("current process instance-id=%s", taskManager.TaskInstanceId)
+}
+

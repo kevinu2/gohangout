@@ -14,7 +14,6 @@ import (
 	"os"
 	"runtime"
 	"runtime/pprof"
-	"strings"
 )
 
 var version = "1.7.8"
@@ -55,13 +54,11 @@ func init() {
 	flag.StringVar(&cmdOptions.taskShard, "task-shard", "0", "task running shard index")
 
 	flag.Parse()
-	taskShardPrefix := ""
 	if utils.StrIsEmpty(cmdOptions.config) {
 		cfg.InitAppConfig()
 		appConfig = cfg.GetAppConfig()
 		if appConfig != nil {
 			ruleLoadMode = appConfig.RuleLoadMode
-			taskShardPrefix = appConfig.TaskShardPrefix
 		}
 	}
 	if ruleLoadMode == "" {
@@ -72,7 +69,6 @@ func init() {
 		ExitWhenNil:    cmdOptions.exitWhenNil,
 		Worker:         cmdOptions.worker,
 		ConfigFilePath: cmdOptions.config,
-		TaskShard:      strings.Join([]string{taskShardPrefix, cmdOptions.taskShard}, ""),
 	}
 	taskManager = task.GetTaskManager()
 	taskManager.CmdOptions = cmdOptions
@@ -119,8 +115,8 @@ func main() {
 	} else if ruleLoadMode == common.ConfigDir {
 		task.LoadFromConfigDir()
 	} else if ruleLoadMode == common.Rpc {
-		task.LoadFromDb()
-		rpc.StartRpcServer()
+		task.RegisterToEtcd()
+		go rpc.StartRpcServer()
 	}
 	<-mainThreadExitChan
 	taskManager.StopAllTask()

@@ -10,7 +10,6 @@ import (
 )
 
 type AppConfig struct {
-	TaskShardPrefix string  `yaml:"task-shard-prefix"`
 	RuleLoadMode  common.RuleLoadMode  `yaml:"rule-load-mode"`
 	DbConfig struct {
 		Host     string `yaml:"host"`
@@ -20,7 +19,10 @@ type AppConfig struct {
 		Password string `yaml:"password"`
 	} `yaml:"hangout-pg"`
 	RpcConfig struct {
-		Address string `yaml:"address"`
+		Port int `yaml:"port"`
+		EtcdAddr []string `yaml:"etcd-addr"`
+		RegistryPrefix string `yaml:"etcd-prefix-registry"`
+		ConfigPrefix string  `yaml:"etcd-prefix-config"`
 	} `yaml:"hangout-rpc"`
 }
 
