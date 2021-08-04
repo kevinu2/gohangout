@@ -18,6 +18,7 @@ func (tskManager *TskManager) UploadRpcTask(args *TskRpcRequest) *TskActionResul
         return actionResult
     }
     param, err := GenerateStartParam(&args.UploadContent, common.Rpc, false)
+    actionResult.TaskStatus = Unupload
     if err != nil {
         actionResult.Success = false
         actionResult.Err = err
