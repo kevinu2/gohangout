@@ -8,7 +8,6 @@ import (
 	"github.com/kevinu2/gohangout/cfg"
 	"github.com/kevinu2/gohangout/common"
 	"github.com/kevinu2/gohangout/utils"
-	"github.com/rs/xid"
 	"strings"
 	"sync"
 	"time"
@@ -281,7 +280,7 @@ func RegisterToEtcd() {
 		glog.Fatalf("rpc port=%d is invalid", port)
 	}
 	createEtcdClient(etcdAddr)
-	uid := xid.New().String()
+	uid := strings.ReplaceAll(uuid.New().String(), "-", "")
 	registerRpcServiceToEtc(rpcCfg.RegistryPrefix, port, uid)
 	configEtcdPrefix := rpcCfg.ConfigPrefix
 	instancePrefix := configEtcdPrefix + ".instance"
