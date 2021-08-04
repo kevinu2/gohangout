@@ -23,6 +23,8 @@
 
 inputs:
   - GRPCInput:
+      etcdserver:
+              - 'http://10.1.1.30:2379'
       from: 1
       to: 102
       max_messages: 1001
