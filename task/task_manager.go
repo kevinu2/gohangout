@@ -283,6 +283,9 @@ func RegisterToEtcd() {
 	uid := strings.ReplaceAll(uuid.New().String(), "-", "")
 	registerRpcServiceToEtc(rpcCfg.RegistryPrefix, port, uid)
 	configEtcdPrefix := rpcCfg.ConfigPrefix
+	if configEtcdPrefix == "" {
+		configEtcdPrefix = "config"
+	}
 	instancePrefix := configEtcdPrefix + ".instance"
 	taskManager.TaskInstanceId = instancePrefix + "." + uid
 	glog.Infof("current process instance-id=%s", taskManager.TaskInstanceId)

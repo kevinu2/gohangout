@@ -1,6 +1,7 @@
 package task
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/golang/glog"
 	"github.com/kevinu2/gohangout/etcd"
@@ -8,6 +9,11 @@ import (
 	"strconv"
 	"time"
 )
+
+
+type RegisterInfo struct {
+	Addr string
+}
 
 var serviceDiscoveryClient etcd.Store
 
@@ -73,12 +79,19 @@ func registerRpcServiceToEtc(registerPrefix string, port int, uuid string)  {
 	if err != nil {
 		glog.Fatal(err)
 	}
-	key := registerPrefix + "." + uuid
+	key := registerPrefix + "/" + uuid
 	value := "http://" + ip.String() + ":" + strconv.Itoa(port)
 	writeOption := &etcd.WriteOptions{
 		TTL: time.Second * 30,
 	}
-	err = serviceDiscoveryClient.Put(key, []byte(value), writeOption)
+	registerInfo := RegisterInfo {
+		Addr: value,
+	}
+	jsonInfo, err := json.Marshal(&registerInfo)
+	if err != nil {
+		glog.Error(err)
+	}
+	err = serviceDiscoveryClient.Put(key, jsonInfo, writeOption)
     if err != nil {
     	glog.Error("register to etcd fail:", err)
 	} else {
