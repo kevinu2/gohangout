@@ -51,6 +51,7 @@ func getLocalIp() string{
 		IpAddr = "localhost"
 		return  IpAddr
 	}
+
 	for _, addr := range addrSlice {
 		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if nil != ipnet.IP.To4() {
@@ -131,10 +132,13 @@ func newGRPCInput(config map[interface{}]interface{}) topology.Input {
 
 		//get ip
 
+		ip:=getLocalIp()
+		ip+="50004"
+
 		//register  to etcd server endpoint
 		//or create self server to rec data ?
 		if nil != err {
-			runGoServer(addr)
+			runGoServer(ip)
 		}
 	}()
 
