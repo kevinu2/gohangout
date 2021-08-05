@@ -288,3 +288,8 @@ func RegisterToEtcd() {
 	glog.Infof("current process instance-id=%s", taskManager.TaskInstanceId)
 }
 
+func (tskManager *TskManager) ReleaseResource() {
+	taskManager.StopAllTask()
+	CloseEtcdClient()
+}
+

@@ -3,30 +3,24 @@ package task
 import (
 	"errors"
 	"github.com/golang/glog"
-	"github.com/rpcxio/libkv"
-	"github.com/rpcxio/libkv/store"
-	estore "github.com/rpcxio/rpcx-etcd/store"
-	etcd "github.com/rpcxio/rpcx-etcd/store/etcdv3"
+	"github.com/kevinu2/gohangout/etcd"
 	"net"
 	"strconv"
+	"time"
 )
 
-var EtcdClient store.Store
+var serviceDiscoveryClient etcd.Store
 
 func init() {
 	etcd.Register()
 }
 
 func createEtcdClient(addr []string)   {
-	kv, err := libkv.NewStore(estore.ETCDV3, addr, nil)
+	kv, err := etcd.NewStore(etcd.HangoutEtcd3Backend, addr, nil)
 	if err != nil {
 		glog.Fatal(err)
 	}
-	_, error := kv.Exists("connection")
-	if error != nil {
-		glog.Fatal(error)
-	}
-	EtcdClient = kv
+	serviceDiscoveryClient = kv
 }
 
 func getIpFromAddr(addr net.Addr) net.IP {
@@ -81,11 +75,20 @@ func registerRpcServiceToEtc(registerPrefix string, port int, uuid string)  {
 	}
 	key := registerPrefix + "." + uuid
 	value := "http://" + ip.String() + ":" + strconv.Itoa(port)
-	err = EtcdClient.Put(key, []byte(value), nil)
+	writeOption := &etcd.WriteOptions{
+		TTL: time.Second * 30,
+	}
+	err = serviceDiscoveryClient.Put(key, []byte(value), writeOption)
     if err != nil {
-    	glog.Error(err)
+    	glog.Error("register to etcd fail:", err)
 	} else {
 		glog.Infof("register to etcd success %s=%s", key,value)
+	}
+}
+
+func CloseEtcdClient()  {
+	if serviceDiscoveryClient != nil {
+		serviceDiscoveryClient.Close()
 	}
 }
 

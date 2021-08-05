@@ -119,6 +119,6 @@ func main() {
 		go rpc.StartRpcServer()
 	}
 	<-mainThreadExitChan
-	taskManager.StopAllTask()
+	taskManager.ReleaseResource()
 	rpc.StopRpcServer()
 }

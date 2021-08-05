@@ -13,18 +13,16 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/ipipdotnet/datx-go v0.0.0-20180617151335-0ac818a639c3
 	github.com/ipipdotnet/ipdb-go v1.3.0
-	github.com/jinzhu/gorm v1.9.16
 	github.com/json-iterator/go v1.1.11
 	github.com/kevinu2/shm v0.0.0-20210727044400-2e45fef07453
 	github.com/magiconair/properties v1.8.1
 	github.com/oliveagle/jsonpath v0.0.0-20180606110733-2e52cf6e6852
 	github.com/panjf2000/ants/v2 v2.4.6
 	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
-	github.com/rpcxio/libkv v0.5.1-0.20210420120011-1fceaedca8a5
 	github.com/rpcxio/rpcx-etcd v0.0.0-20210606082724-1a5593db7a0d
-	github.com/rs/xid v1.3.0
 	github.com/smallnest/rpcx v1.6.5
 	github.com/spf13/viper v1.6.3
+	go.etcd.io/etcd/client/v3 v3.5.0-alpha.0
 	golang.org/x/sys v0.0.0-20210603081109-ebe580a85c40 // indirect
 	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c // indirect
 	google.golang.org/grpc v1.38.0
