@@ -1,5 +1,1 @@
-rule-load-mode: RPC #CONFIG_DIR,RPC
-hangout-rpc:
-  port: 8972
-  etcd-addr: [127.0.0.1:2379]
-  etcd-prefix-registry: registry.rel.gho
+rule-load-mode: CONFIG_DIR #CONFIG_DIR,RPC
