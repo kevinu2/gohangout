@@ -8,6 +8,8 @@ import (
 	"github.com/kevinu2/gohangout/cfg"
 	"github.com/kevinu2/gohangout/common"
 	"github.com/kevinu2/gohangout/utils"
+	"path"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -32,6 +34,18 @@ type TskManager struct {
 type TskRpcRequest struct {
 	UploadContent string
 }
+
+
+type RuleComponent struct {
+	MainFile string
+	IoFile string
+}
+
+const(
+	RuleFilterSuffix = "-io"
+	RuleInputsKey = "inputs"
+	RuleOutputsKey = "outputs"
+)
 
 var (
 	taskManager  *TskManager
@@ -182,6 +196,9 @@ func GenerateHangoutTask(param *TskStartParam, tskManager *TskManager) (*Hangout
 		Description: description,
 		TaskStatus: Unupload,
 	}
+	if param.ruleLoadMode == common.ConfigDir {
+		task.AutoReload = false
+	}
 	task.CreateTime = time.Now().Format( "2006-01-02 15:04:05.000")
     if param.base64Config != nil {
     	task.Base64Config =  *param.base64Config
@@ -236,16 +253,62 @@ func LoadFromCmd() {
 	handleCommitResult(commitResult, hangoutTask)
 }
 
+
 func LoadFromConfigDir() {
 	ruleFiles := common.LoadRuleFromConfigDir()
 	if len(ruleFiles) == 0 {
 		glog.Warning("could not find valid rule file at the dir config/rules")
 	}
+	//key为无后缀的短文件名
+	ruleFileMap := make(map[string]*RuleComponent, 1)
 	for _, file := range ruleFiles {
-		param, err := GenerateStartParam(&file, common.ConfigDir, true)
+		fileNameWithSuffix := filepath.Base(file) //获取文件名带后缀
+		fileSuffix := path.Ext(fileNameWithSuffix)
+		filenameOnly := strings.TrimSuffix(fileNameWithSuffix, fileSuffix)//获取文件名
+		glog.Infof("load file with name=%s", file)
+		key := filenameOnly
+		hasIoSuffix := strings.HasSuffix(filenameOnly, RuleFilterSuffix)
+		if hasIoSuffix {
+			key = strings.TrimSuffix(filenameOnly, RuleFilterSuffix)
+		}
+		component, exists := ruleFileMap[key]
+		if !exists {
+			component = new(RuleComponent)
+			ruleFileMap[key] = component
+		}
+		if hasIoSuffix {
+			component.IoFile = file
+		} else {
+			component.MainFile = file
+		}
+	}
+	for _, v := range ruleFileMap {
+		if utils.StrIsEmpty(v.MainFile) {
+			continue
+		}
+		mainCfg, err := cfg.ParseConfig(v.MainFile)
 		if err != nil {
 			glog.Error(err)
 			continue
+		}
+		ioCfg, err := cfg.ParseConfig(v.IoFile)
+		if err != nil {
+			glog.Error(err)
+			goto StartTask
+		}
+		if inputs, exist := ioCfg[RuleInputsKey]; exist {
+			mainCfg[RuleInputsKey] = inputs
+		}
+		if outputs, exist := ioCfg[RuleOutputsKey]; exist {
+			mainCfg[RuleOutputsKey] = outputs
+		}
+	StartTask:
+		param := &TskStartParam{
+			config: mainCfg,
+			fileName: v.MainFile,
+			commitChan: make(chan TskActionResult),
+			ruleLoadMode: common.ConfigDir,
+			StartInstant: true,
 		}
 		hangoutTask, _ := GenerateHangoutTask(param, taskManager)
 		commitResult := taskManager.startHangoutTask(param, hangoutTask)
