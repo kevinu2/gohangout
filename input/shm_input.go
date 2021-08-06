@@ -156,7 +156,7 @@ func (p *ShmInput) startShmConsumer(shareMemory *ishm.SHMInfo, key int32)  {
 	consumer := new(ishm.Consumer)
 	success := consumer.Init(int64(key), shareMemory.MaxSHMSize, shareMemory.MaxContentLen)
 	if !success {
-		glog.Errorf("init consumer error with shm key = %d and  consumer key = %d", p.shmKey, key)
+		glog.Fatalf("init consumer error with shm key = %d and  consumer key = %d", p.shmKey, key)
 		return
 	}
 	glog.Infof("init consumer success with shm key = %d and consumer key = %d", p.shmKey, key)
