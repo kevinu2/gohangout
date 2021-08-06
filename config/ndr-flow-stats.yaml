@@ -7,6 +7,14 @@ inputs:
       shm_key: 222222
       codec: json
       decorate_events: false
-      messages_queue_length: 50
+      messages_queue_length: 10
+filters:
+  - Remove:
+      fields: ['@timestamp']
 outputs:
-  - Stdout: {}
+  - RedisPub:
+      addr: 127.0.0.1:6379
+      passwd: ""
+      db: 0
+      channel: "ndrStats"
+      pool_size: 3
