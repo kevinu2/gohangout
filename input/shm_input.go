@@ -174,7 +174,7 @@ func (p *ShmInput) startShmConsumer(shareMemory *ishm.SHMInfo, key int32)  {
 			continue
 		case ishm.ShmConsumerLenErr:
 			glog.Error("len error")
-		case ishm.ShmConsumerReadErr:
+		case ishm.ShmConsumerReadErr,ishm.ShmConsumerUnAttached:
 			glog.Error("read error, please check log producer is alive")
 			consumer.Reset()
 			//延迟重启，等待对端程序拉起
