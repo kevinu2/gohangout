@@ -1,1 +1,1 @@
-rule-load-mode: CONFIG_DIR #CONFIG_DIR,RPC
+rule-load-mode: CMD #CONFIG_DIR,RPC
