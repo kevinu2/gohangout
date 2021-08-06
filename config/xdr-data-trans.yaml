@@ -8,7 +8,7 @@ inputs:
               wlza_ndr_http_log: 2
           codec: json
           consumer_settings:
-              bootstrap.servers: "10.1.1.11"
+              bootstrap.servers: "10.1.1.11:9092"
               group.id: gohangout.ndrlog-wlza-http
               max.partition.fetch.bytes: '20485760'
               auto.commit.interval.ms: '1000'
