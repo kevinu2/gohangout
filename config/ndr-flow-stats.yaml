@@ -9,4 +9,4 @@ inputs:
       decorate_events: false
       messages_queue_length: 50
 outputs:
-    - Stdout: {}
+  - Stdout: {}
