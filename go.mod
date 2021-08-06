@@ -15,7 +15,7 @@ require (
 	github.com/ipipdotnet/datx-go v0.0.0-20180617151335-0ac818a639c3
 	github.com/ipipdotnet/ipdb-go v1.3.0
 	github.com/json-iterator/go v1.1.11
-	github.com/kevinu2/shm v0.0.0-20210727044400-2e45fef07453
+	github.com/kevinu2/shm v0.0.0-20210806093509-df5b2026f004
 	github.com/magiconair/properties v1.8.1
 	github.com/oliveagle/jsonpath v0.0.0-20180606110733-2e52cf6e6852
 	github.com/panjf2000/ants/v2 v2.4.6
