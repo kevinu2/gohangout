@@ -1,0 +1,12 @@
+id: ndr0001
+name: ndr流量统计
+vendor: NDR
+worker: 1
+inputs:
+  - Shm:
+      shm_key: 222222
+      codec: json
+      decorate_events: false
+      messages_queue_length: 50
+outputs:
+  - Stdout: {}
