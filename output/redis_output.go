@@ -20,6 +20,7 @@ type RedisOutput struct {
     passwd      string
     db          int
     channelName string
+    PoolSize    int
 }
 
 func newRedisOutput(config map[interface{}]interface{}) topology.Output {
@@ -61,6 +62,13 @@ func newRedisOutput(config map[interface{}]interface{}) topology.Output {
     } else {
         glog.Fatal("channel must be set in redis output")
     }
+    if v, ok := config["pool_size"]; ok {
+        if p.PoolSize, ok = v.(int); !ok {
+            glog.Fatal("redis pool_size must be a int")
+        }
+    } else {
+        p.PoolSize = 1
+    }
     //RedisDB.AddConfig("", "", "passwd", "host", port, "dbTime string", 0, 0, 0, 0)
     /*p.redisdb = redis.NewClient(&redis.Options{
           Addr: p.addr,Password: p.passwd, DB: p.db,
@@ -73,7 +81,7 @@ func newRedisOutput(config map[interface{}]interface{}) topology.Output {
         Addr:     p.addr,
         Password: p.passwd,
         DB:       p.db,
-        PoolSize: 10,
+        PoolSize: p.PoolSize,
     })
     return p
 

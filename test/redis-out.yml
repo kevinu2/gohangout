@@ -1,0 +1,16 @@
+inputs:
+  - Random:
+      from: 1
+      to: 102
+      max_messages: 1001
+  - Random:
+      from: 1
+      to: 100
+      max_messages: 101
+outputs:
+  - RedisPub:
+      addr: 127.0.0.1:6379
+      passwd: ""
+      db: 0
+      channel: "channel name"
+      pool_size: 10
