@@ -18,6 +18,10 @@ func NewDecoder(t string) Decoder {
 		return &JsonDecoder{useNumber: true}
 	case "json:not_usenumber":
 		return &JsonDecoder{useNumber: false}
+	case "shm":
+		return &ShmDecoder{}
+	case "shm_json":
+		return &ShmJsonDecoder{useNumber: true}
 	default:
 		p, err := plugin.Open(t)
 		if err != nil {

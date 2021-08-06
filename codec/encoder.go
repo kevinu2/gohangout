@@ -14,6 +14,8 @@ func NewEncoder(t string) Encoder {
 		return &JsonEncoder{}
 	case "simplejson":
 		return &simplejson.Decoder{}
+	case "shm":
+		return &ShmEncoder{}
 	}
 	panic(t + " encoder not supported")
 	return nil
