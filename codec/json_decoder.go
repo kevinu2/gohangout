@@ -23,7 +23,7 @@ func (jd *JsonDecoder) Decode(value []byte) map[string]interface{} {
 		glog.V(10).Info(err)
 		return map[string]interface{}{
 			"@timestamp": time.Now(),
-			 ParseFailedMessageField:    string(value),
+			 UnParsedMessageField:    string(value),
 		}
 	}
 

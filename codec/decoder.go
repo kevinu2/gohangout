@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	ParseFailedMessageField = "@parse_failed_message"
+	UnParsedMessageField = "unparsed_message"
 )
 
 type Decoder interface {
