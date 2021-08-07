@@ -6,6 +6,10 @@ import (
 	"github.com/golang/glog"
 )
 
+const (
+	ParseFailedMessageField = "@parse_failed_message"
+)
+
 type Decoder interface {
 	Decode([]byte) map[string]interface{}
 }

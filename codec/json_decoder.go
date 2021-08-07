@@ -2,6 +2,7 @@ package codec
 
 import (
 	"bytes"
+	"github.com/golang/glog"
 	"time"
 )
 
@@ -19,9 +20,10 @@ func (jd *JsonDecoder) Decode(value []byte) map[string]interface{} {
 	}
 	err := d.Decode(&rst)
 	if err != nil || d.More() {
+		glog.V(10).Info(err)
 		return map[string]interface{}{
 			"@timestamp": time.Now(),
-			"message":    string(value),
+			 ParseFailedMessageField:    string(value),
 		}
 	}
 
