@@ -5,8 +5,6 @@ import (
 	"net"
 )
 
-type IpConverter struct{}
-
 func ipV4toN(ip string) int64  {
 	ipAddr := net.ParseIP(ip)
 	if ipAddr == nil {
@@ -16,4 +14,3 @@ func ipV4toN(ip string) int64  {
 	ret.SetBytes(ipAddr.To4())
 	return ret.Int64()
 }
-
