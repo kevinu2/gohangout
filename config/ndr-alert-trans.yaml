@@ -1,0 +1,32 @@
+id: ndr0002
+name: ndr告警外发
+vendor: NDR
+worker: 2
+inputs:
+  - Shm:
+      shm_key: 333333
+      codec: json
+      decorate_events: false
+      messages_queue_length: 100
+filters:
+  - Filters:
+      if:
+        - '{{if eq (lowercase .app_proto) "http"}}y{{end}}'
+      filters:
+        - Add:
+            fields:
+              alarm_topic: 'wlza_ndr_alert_web_log'
+  - Filters:
+      if:
+        - '{{if ne (lowercase .app_proto) "http"}}y{{end}}'
+      filters:
+        - Add:
+            fields:
+              alarm_topic: 'wlza_ndr_alert_log'
+outputs:
+  - RedisPub:
+      addr: 127.0.0.1:6379
+      passwd: ""
+      db: 0
+      channel: "ndrAlertTrans"
+      pool_size: 3

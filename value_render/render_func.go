@@ -3,6 +3,7 @@ package value_render
 import (
 	"math/big"
 	"net"
+	"strings"
 )
 
 func ipV4toN(ip string) int64  {
@@ -13,4 +14,8 @@ func ipV4toN(ip string) int64  {
 	ret := big.NewInt(0)
 	ret.SetBytes(ipAddr.To4())
 	return ret.Int64()
+}
+
+func lowercase(value string) string  {
+	return strings.ToLower(value)
 }

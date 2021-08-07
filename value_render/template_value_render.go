@@ -52,6 +52,7 @@ func init() {
 	funcMap["hassuffix"] = strings.HasSuffix
 	funcMap["replace"] = strings.Replace
 	funcMap["ipv4ToInt"] = ipV4toN
+	funcMap["lowercase"] = lowercase
 
 	funcMap["timeFormat"] = func(t time.Time, format string) string {
 		return t.Format(format)
