@@ -1,0 +1,13 @@
+name: 字段值base64编码函数替换
+inputs:
+  - Random:
+      from: 1
+      to: 100
+      max_messages: 1
+filters:
+  - Add:
+      overwrite: true
+      fields:
+        message: '{{ b64enc .message }}'
+outputs:
+  - Stdout: {}
