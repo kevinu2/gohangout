@@ -24,6 +24,7 @@ func (shm *ShmDecoder) Decode(value []byte) map[string]interface{} {
 	rst["event_type"] = string(tlvHead.EventType[:tlvHead.EventTypeLen])
 	rst["topic"] = string(tlvHead.Topic[:tlvHead.TopicLen])
 	headSize := unsafe.Sizeof(tlvHead)
+	//todo test content with gb2312 code data
 	rst["content"] = string(value[headSize:tlvHead.Len])
 	return rst
 }
